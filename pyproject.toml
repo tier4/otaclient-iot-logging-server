@@ -27,7 +27,7 @@ dependencies = [
   "typing_extensions>=4.0",
 ]
 dynamic = ["version"]
-description = "A logger server that proxies logs from otaclient(s) to AWS cloudwatch."
+description = "A logging server that uploads logs sent from otaclient to AWS cloudwatch."
 
 [project.optional-dependencies]
 dev = [
