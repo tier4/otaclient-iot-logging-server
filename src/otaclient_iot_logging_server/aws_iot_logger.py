@@ -133,10 +133,9 @@ class AWSIoTLogger:
             #       see docs for more details.
             if _sequence_token := response.get("nextSequenceToken"):
                 self._sequence_tokens[log_stream_name] = _sequence_token
-        except (
-            exceptions.DataAlreadyAcceptedException,
-            exceptions.InvalidSequenceTokenException,
-        ) as e:
+        except exceptions.DataAlreadyAcceptedException:
+            pass
+        except exceptions.InvalidSequenceTokenException as e:
             response = e.response
             logger.debug(f"{response}: {e!r}")
 
@@ -148,12 +147,14 @@ class AWSIoTLogger:
                 self._sequence_tokens.pop(log_stream_name, None)
             else:
                 self._sequence_tokens[log_stream_name] = next_expected_token
+            raise  # let the retry do the logging upload again
         except client.exceptions.ResourceNotFoundException as e:
             response = e.response
             logger.info(f"{log_stream_name=} not found: {e!r}")
             self._create_log_stream(
                 log_group_name=log_group_name, log_stream_name=log_stream_name
             )
+            raise
         except Exception as e:
             logger.error(
                 f"put_log_events failure: {e!r}\n"
