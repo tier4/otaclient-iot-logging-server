@@ -51,15 +51,18 @@ ARG CMD_NAME
 
 COPY --from=venv_builder ${PYTHON_VENV} ${PYTHON_VENV}
 
-# add libcurl
+# add missing libs
 RUN set -eux ; \
 	apt-get update ; \
-	apt-get install -y --no-install-recommends libcurl4 ; \
-	rm -rf /var/lib/apt/lists/*
-
+	apt-get install -y --no-install-recommends \
+		libcurl4 ; \
+	rm -rf \
+		/var/lib/apt/lists/* \
+		/root/.cache \
+		/tmp/*
 
 # add mount points placeholder
-RUN mkdir -p /opt /greengrass 
+RUN mkdir -p /opt /greengrass
 
 ENV PATH="${PYTHON_VENV}/bin:${PATH}"
 
