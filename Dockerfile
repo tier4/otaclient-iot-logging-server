@@ -51,6 +51,9 @@ ARG CMD_NAME
 
 COPY --from=venv_builder ${PYTHON_VENV} ${PYTHON_VENV}
 
+# add mount points placeholder
+RUN mkdir -p /opt /greengrass 
+
 ENV PATH="${PYTHON_VENV}/bin:${PATH}"
 
 CMD ["iot_logging_server"]
