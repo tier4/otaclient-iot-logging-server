@@ -51,6 +51,13 @@ ARG CMD_NAME
 
 COPY --from=venv_builder ${PYTHON_VENV} ${PYTHON_VENV}
 
+# add libcurl
+RUN set -eux ; \
+	apt-get update ; \
+	apt-get install -y --no-install-recommends libcurl4 ; \
+	rm -rf /var/lib/apt/lists/*
+
+
 # add mount points placeholder
 RUN mkdir -p /opt /greengrass 
 
