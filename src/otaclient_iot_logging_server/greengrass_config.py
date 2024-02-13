@@ -117,7 +117,7 @@ def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
         thing_name=thing_arn.thing_name,
         profile=this_profile_info.profile_name,
         region=thing_arn.region,
-        aws_credential_provider_endpoint=str(this_profile_info.credential_endpoint),
+        aws_credential_provider_endpoint=str(this_profile_info.credential_endpoint_url),
     )
 
 
@@ -202,7 +202,7 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
         default=None,
     )
     if _cred_endpoint is None:
-        cred_endpoint = str(this_profile_info.credential_endpoint)
+        cred_endpoint = str(this_profile_info.credential_endpoint_url)
     else:
         cred_endpoint = f"https://{_cred_endpoint.rstrip('/')}/"
 

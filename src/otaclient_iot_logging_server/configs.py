@@ -18,15 +18,15 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Annotated
 
 import yaml
-from pydantic import AnyHttpUrl, BaseModel
+from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ConfigurableLoggingServerConfig(BaseSettings):
     model_config = SettingsConfigDict(frozen=True, validate_default=True)
-
     # the default location of greengrass configuration files.
     # NOTE(20240209): allow user to change this values with env vars,
     GREENGRASS_V1_CONFIG: str = "/greengrass/config/config.json"
@@ -51,8 +51,8 @@ class AWSProfileInfo(BaseModel):
     class Profile(BaseModel):
         model_config = SettingsConfigDict(frozen=True)
         profile_name: str
-        account_id: str
-        credential_endpoint: AnyHttpUrl
+        account_id: Annotated[str, BeforeValidator(str)] = Field(pattern=r"^\d{12}$")
+        credential_endpoint_url: AnyHttpUrl
 
     profiles: list[Profile]
 
