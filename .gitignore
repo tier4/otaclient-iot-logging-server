@@ -4,6 +4,6 @@ coverage
 build/
 dist/
 mypy_cache/
-otaclient_iot_logging_server/_version.py
 __pycache__/
 venv/
+src/otaclient_iot_logging_server/_version.py

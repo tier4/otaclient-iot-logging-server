@@ -82,14 +82,14 @@ UPLOAD_INTERVAL = "6"
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "otaclient_iot_logging_server/_version.py"
+version-file = "src/otaclient_iot_logging_server/_version.py"
 
 [tool.hatch.build.targets.sdist]
 exclude = ["/.github", "/docs"]
 
 [tool.hatch.build.targets.wheel]
-only-include = ["otaclient_iot_logging_server"]
-sources = ["otaclient_iot_logging_server"]
+only-include = ["src"]
+sources = ["src"]
 
 [tool.isort]
 atomic = true
