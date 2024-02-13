@@ -1,0 +1,15 @@
+system:
+  certificateFilePath: "/greengrass/certs/gg.cert.pem"
+  privateKeyPath: "/greengrass/certs/gg.private.key"
+  rootCaPath: "/greengrass/certs/root.ca.pem"
+  rootpath: "/greengrass/v2"
+  thingName: "thing_name"
+services:
+  aws.greengrass.Nucleus:
+    componentType: "NUCLEUS"
+    version: "2.6.0"
+    configuration:
+      awsRegion: "region"
+      iotRoleAlias: "iot_role_alias"
+      iotDataEndpoint: "abcdefghijklm-ats.iot.region.amazonaws.com"
+      iotCredEndpoint: "abcdefghijk01.credentials.iot.region.amazonaws.com"

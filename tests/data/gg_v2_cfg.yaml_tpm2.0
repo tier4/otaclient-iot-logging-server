@@ -1,0 +1,21 @@
+system:
+  certificateFilePath: "pkcs11:object=greengrass;type=cert;pin-value=greengrass"
+  privateKeyPath: "pkcs11:object=greengrass;type=private;pin-value=greengrass"
+  rootCaPath: "/greengrass/certs/root.ca.pem"
+  rootpath: "/greengrass/v2"
+  thingName: "thing_name"
+services:
+  aws.greengrass.Nucleus:
+    componentType: "NUCLEUS"
+    version: "2.6.0"
+    configuration:
+      awsRegion: "region"
+      iotRoleAlias: "iot_role_alias"
+      iotDataEndpoint: "abcdefghijklm-ats.iot.region.amazonaws.com"
+      iotCredEndpoint: "abcdefghijk01.credentials.iot.region.amazonaws.com"
+  aws.greengrass.crypto.Pkcs11Provider:
+    configuration:
+      library: "/usr/lib/x86_64-linux-gnu/pkcs11/libtpm2_pkcs11.so"
+      name: "tpm2_pkcs11"
+      slot: 1
+      userPin: "greengrass"
