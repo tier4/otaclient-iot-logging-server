@@ -1,14 +1,14 @@
 [Unit]
-Description=OTAClient AWS Iot logging server 
+Description=OTAClient AWS Iot logging server
 Wants=network-online.target
 After=network-online.target nss-lookup.target
 
 [Service]
-RootImage=/opt/ota/client/iot_logging_server.img
-BindReadOnlyPaths=/etc/hosts /etc/hostname /greengrass /opt
-ExecStart=/venv/bin/iot_logging_server
-Environment=LISTEN_ADDRESS="127.0.0.1"
+ExecStart=/opt/ota/iot_logger/venv/bin/iot_logging_server
+Environment=LISTEN_ADDRESS=127.0.0.1
 Environment=LISTEN_ADDRESS=8083
+Environment=UPLOAD_LOGGING_SERVER_LOGS=true
+Environment=SERVER_LOGGING_LEVEL=INFO
 Restart=on-failure
 RestartSec=10
 Type=simple
