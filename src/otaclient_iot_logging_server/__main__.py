@@ -19,6 +19,8 @@ import logging
 import time
 from queue import Queue
 
+from typing_extensions import NoReturn
+
 from otaclient_iot_logging_server import __version__
 from otaclient_iot_logging_server import package_name as root_package_name
 from otaclient_iot_logging_server._common import LogMessage
@@ -34,9 +36,8 @@ class _LogTeeHandler(logging.Handler):
         self,
         queue: Queue[tuple[str, LogMessage]],
         logstream_suffix: str,
-        level: int | str = 0,
     ) -> None:
-        super().__init__(level)
+        super().__init__()
         self._queue = queue
         self._logstream_suffix = logstream_suffix
 
@@ -74,18 +75,18 @@ def _config_logging(
         _tee_handler = _LogTeeHandler(
             queue=queue,
             logstream_suffix=server_logstream_suffix,
-            level=level,
         )
         _fmt = logging.Formatter(fmt=server_cfg.SERVER_LOGGING_LOG_FORMAT)
         _tee_handler.setFormatter(_fmt)
 
         # attach the log tee handler to the root logger
         root_logger.addHandler(_tee_handler)
+        root_logger.info(f"enable server logs upload with {server_logstream_suffix=}")
 
     return root_logger
 
 
-def main():
+def main() -> NoReturn:
     queue = Queue(maxsize=server_cfg.MAX_LOGS_BACKLOG)
 
     root_logger = _config_logging(
@@ -96,15 +97,16 @@ def main():
         server_logstream_suffix=server_cfg.SERVER_LOGSTREAM_SUFFIX,
     )
 
+    root_logger.info(
+        f"launching iot_logging_server({__version__}) at http://{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
+    )
+    root_logger.info(f"iot_logging_server config: \n{server_cfg}")
+
     launch_server(
         parse_config(),
         queue=queue,
         max_logs_per_merge=server_cfg.MAX_LOGS_PER_MERGE,
         interval=server_cfg.UPLOAD_INTERVAL,
-    )
-
-    root_logger.info(
-        f"logger server({__version__}) is launched at http://{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
     )
 
 
