@@ -21,7 +21,7 @@ import logging
 import re
 from functools import partial
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 from urllib.parse import urljoin
 
 import yaml
@@ -117,7 +117,7 @@ def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
         thing_name=thing_arn.thing_name,
         profile=this_profile_info.profile_name,
         region=thing_arn.region,
-        aws_credential_provider_endpoint=str(this_profile_info.credential_endpoint_url),
+        aws_credential_provider_endpoint=str(this_profile_info.credential_endpoint),
     )
 
 
@@ -131,8 +131,8 @@ def _v2_complete_uri(_cfg: NestedDict, _uri: str) -> str:
         aws.greengrass.crypto.Pkcs11Provider section, so these
         option is striped from priv_key/cert URI.
 
-    As we will feed the URI to external openssl pkcs11 engine when using
-        pycurl, we need to add the userPin information back to URI for openssl.
+    As we will feed the URI to external pkcs11 libs when using
+        we need to add the userPin information back to URI.
 
     Example pkcs11 URI schema:
     pkcs11:token=<token_label>;object=<key_label>;pin-value=<userpin>;type=<cert/private)>
@@ -190,21 +190,38 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
     this_profile_info = profile_info.get_profile_info(
         get_profile_from_thing_name(thing_name)
     )
+
     # NOTE(20240207): use credential endpoint defined in the config.yml in prior,
     #                 only when this information is not available, we use the
     #                 <_AWS_CREDENTIAL_PROVIDER_ENDPOINT_MAPPING> to get endpoint.
-    _cred_endpoint: str = chain_query(
+    _cred_endpoint: str
+    if _cred_endpoint := chain_query(
         loaded_cfg,
         "services",
         "aws.greengrass.Nucleus",
         "configuration",
         "iotCredEndpoint",
         default=None,
-    )
-    if _cred_endpoint is None:
-        cred_endpoint = str(this_profile_info.credential_endpoint_url)
+    ):
+        cred_endpoint = _cred_endpoint
     else:
-        cred_endpoint = f"https://{_cred_endpoint.rstrip('/')}/"
+        cred_endpoint = this_profile_info.credential_endpoint
+
+    # ------ parse pkcs11 config if any ------ #
+    _raw_pkcs11_cfg: dict[str, str]
+    pkcs11_cfg = None
+    if _raw_pkcs11_cfg := chain_query(
+        loaded_cfg,
+        "services",
+        "aws.greengrass.crypto.Pkcs11Provider",
+        "configuration",
+        default=None,
+    ):
+        pkcs11_cfg = PKCS11Config(
+            pkcs11_lib=_raw_pkcs11_cfg["library"],
+            user_pin=_raw_pkcs11_cfg["userPin"],
+            slot_id=str(_raw_pkcs11_cfg["slot"]),
+        )
 
     return IoTSessionConfig(
         # NOTE: v2 config doesn't include account_id info
@@ -226,12 +243,25 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
             "awsRegion",
         ),
         aws_credential_provider_endpoint=cred_endpoint,
+        pkcs11_config=pkcs11_cfg,
     )
 
 
 #
 # ------ main config parser ------ #
 #
+
+
+class PKCS11Config(FixedConfig):
+    """
+    See services.aws.greengrass.crypto.Pkcs11Provider section for more details.
+    """
+
+    pkcs11_lib: str
+    slot_id: str
+    user_pin: str
+
+
 class IoTSessionConfig(FixedConfig):
     """Configurations we need picked from parsed Greengrass V1/V2 configration file.
 
@@ -249,6 +279,7 @@ class IoTSessionConfig(FixedConfig):
     region: str
 
     aws_credential_provider_endpoint: str
+    pkcs11_config: Optional[PKCS11Config] = None
 
     @computed_field
     @property
@@ -271,7 +302,7 @@ class IoTSessionConfig(FixedConfig):
     def aws_credential_refresh_url(self) -> str:
         """The endpoint to refresh token from."""
         return urljoin(
-            self.aws_credential_provider_endpoint,
+            f"https://{self.aws_credential_provider_endpoint.rstrip('/')}/",
             f"role-aliases/{self.aws_role_alias}/credentials",
         )
 
