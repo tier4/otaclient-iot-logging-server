@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 import yaml
-from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field
+from pydantic import BaseModel, BeforeValidator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
@@ -55,7 +55,7 @@ class AWSProfileInfo(BaseModel):
         model_config = SettingsConfigDict(frozen=True)
         profile_name: str
         account_id: Annotated[str, BeforeValidator(str)] = Field(pattern=r"^\d{12}$")
-        credential_endpoint_url: AnyHttpUrl
+        credential_endpoint: str
 
     profiles: list[Profile]
 
