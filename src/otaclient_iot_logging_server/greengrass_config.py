@@ -27,12 +27,7 @@ from urllib.parse import urljoin
 import yaml
 from pydantic import computed_field
 
-from otaclient_iot_logging_server._utils import (
-    FixedConfig,
-    NestedDict,
-    chain_query,
-    remove_prefix,
-)
+from otaclient_iot_logging_server._utils import FixedConfig, chain_query, remove_prefix
 from otaclient_iot_logging_server.configs import profile_info, server_cfg
 
 logger = logging.getLogger(__name__)
@@ -124,57 +119,6 @@ def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
 #
 # ------ v2 configuration parse ------ #
 #
-def _v2_complete_uri(_cfg: NestedDict, _uri: str) -> str:
-    """Fix up the URI if the URI is pkcs11 URI.
-
-    In gg v2 config, the pin-value(userPin) are specified in
-        aws.greengrass.crypto.Pkcs11Provider section, so these
-        option is striped from priv_key/cert URI.
-
-    As we will feed the URI to external pkcs11 libs when using
-        we need to add the userPin information back to URI.
-
-    Example pkcs11 URI schema:
-    pkcs11:token=<token_label>;object=<key_label>;pin-value=<userpin>;type=<cert/private)>
-
-    Args:
-        _cfg: the dumped config file dict.
-        _uri: the input uri for completing.
-
-    Returns:
-        Original input <_uri> if <_uri> is not a pkcs11 URI, else a completed
-            pkcs11 URI with pin-value inserted.
-
-    Raises:
-        ValueError on failing complete a pkcs11 URI.
-    """
-    if not _uri.startswith("pkcs11:"):
-        return _uri
-
-    scheme, pkcs11_opts_str = _uri.split(":", maxsplit=1)
-    pkcs11_opts_dict = {}
-    for opt in pkcs11_opts_str.split(";"):
-        k, v = opt.split("=", maxsplit=1)
-        pkcs11_opts_dict[k] = v
-
-    try:
-        user_pin = chain_query(
-            _cfg,
-            "services",
-            "aws.greengrass.crypto.Pkcs11Provider",
-            "configuration",
-            "userPin",
-        )
-        pkcs11_opts_dict["pin-value"] = user_pin
-    except ValueError as e:
-        raise ValueError(
-            f"failed to complete pkcs11 URI: {e!r}\nconfig={_cfg}uri=\n{_uri} "
-        )
-
-    pkcs11_opts_str = (f"{k}={v}" for k, v in pkcs11_opts_dict.items())
-    return f"{scheme}:{';'.join(pkcs11_opts_str)}"
-
-
 def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
     """Parse Greengrass V2 config yaml and take what we need.
 
@@ -227,12 +171,8 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
         # NOTE: v2 config doesn't include account_id info
         account_id=this_profile_info.account_id,
         ca_path=chain_query(loaded_cfg, "system", "rootCaPath"),
-        private_key_path=_v2_complete_uri(
-            loaded_cfg, chain_query(loaded_cfg, "system", "privateKeyPath")
-        ),
-        certificate_path=_v2_complete_uri(
-            loaded_cfg, chain_query(loaded_cfg, "system", "certificateFilePath")
-        ),
+        private_key_path=chain_query(loaded_cfg, "system", "privateKeyPath"),
+        certificate_path=chain_query(loaded_cfg, "system", "certificateFilePath"),
         thing_name=thing_name,
         profile=this_profile_info.profile_name,
         region=chain_query(
