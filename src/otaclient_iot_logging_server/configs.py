@@ -16,13 +16,14 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import yaml
 from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
 
 
 class ConfigurableLoggingServerConfig(BaseSettings):
@@ -37,7 +38,9 @@ class ConfigurableLoggingServerConfig(BaseSettings):
 
     LISTEN_ADDRESS: str = "127.0.0.1"
     LISTEN_PORT: int = 8083
-    SERVER_LOGGING_LEVEL: int = logging.INFO
+    UPLOAD_LOGGING_SERVER_LOGS: bool = False
+    SERVER_LOGSTREAM_SUFFIX: str = "iot_logging_server"
+    SERVER_LOGGING_LEVEL: _LoggingLevelName = "INFO"
     SERVER_LOGGING_LOG_FORMAT: str = (
         "[%(asctime)s][%(levelname)s]-%(name)s:%(funcName)s:%(lineno)d,%(message)s"
     )
