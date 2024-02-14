@@ -15,106 +15,109 @@
 
 from __future__ import annotations
 
-import json
-import logging
+import subprocess
+from pathlib import Path
 
-import pycurl
-from boto3 import Session
-from botocore.credentials import DeferredRefreshableCredentials
-from botocore.session import get_session as get_botocore_session
+from awsiot_credentialhelper.boto3_session import Boto3SessionProvider
+from awsiot_credentialhelper.boto3_session import Pkcs11Config as aws_PKcs11Config
+from OpenSSL import crypto
 
-from otaclient_iot_logging_server._common import Credentials
+from otaclient_iot_logging_server._utils import parse_pkcs11_uri
 from otaclient_iot_logging_server.greengrass_config import IoTSessionConfig
 
-logger = logging.getLogger(__name__)
+
+def _load_pkcs11_cert(
+    pkcs11_lib: str,
+    slot_id: str,
+    user_pin: str,
+    object_label: str,
+) -> bytes:
+    """Load certificate from a pkcs11 interface(backed by a TPM2.0 chip).
+
+    This function requires opensc and libtpm2-pkcs11-1 to be installed,
+        and a properly setup and working TPM2.0 chip.
+    """
+    # fmt: off
+    _cmd = [
+        "/usr/bin/pkcs11-tool",
+        "--module", pkcs11_lib,
+        "--type", "cert",
+        "--pin", user_pin,
+        "--slot", slot_id,
+        "--label", object_label,
+        "--read-object",
+    ]
+    # fmt: on
+    return subprocess.check_output(_cmd)
+
+
+def _convert_to_pem(_data: bytes) -> bytes:
+    """Unconditionally convert input cert to PEM format."""
+    if _data.startswith(b"-----BEGIN CERTIFICATE-----"):
+        return _data
+    return crypto.dump_certificate(
+        crypto.FILETYPE_PEM,
+        crypto.load_certificate(crypto.FILETYPE_ASN1, _data),
+    )
 
 
 class Boto3Session:
-    """A refreshable boto3 session with pkcs11.
-
-    Reference:
-    https://github.com/awslabs/aws-iot-core-credential-provider-session-helper/blob/main/src/awsiot_credentialhelper/boto3_session.py
-    """
 
     def __init__(self, config: IoTSessionConfig) -> None:
         self._config = config
 
-    def get_session(self, **kwargs) -> Session:
-        session = get_botocore_session()
-        # NOTE: session does have an attribute named _credentials
-        session._credentials = DeferredRefreshableCredentials(  # type: ignore
-            method="sts-assume-role",
-            refresh_using=self._get_credentials,
-        )
-        session.set_config_variable("region", self._config.region)
+    def _load_certificate(self) -> bytes:
+        """
+        NOTE: Boto3SessionProvider only takes PEM format cert.
+        """
+        _path = self._config.certificate_path
+        if _path.startswith("pkcs11"):
+            _pkcs11_cfg = self._config.pkcs11_config
+            assert _pkcs11_cfg
 
-        # set other configs if any
-        for k, v in kwargs.items():
-            session.set_config_variable(k, v)
-        return Session(botocore_session=session)
-
-    def _get_credentials(self) -> Credentials:
-        """Get credentials using mtls from credential_endpoint."""
-        gg_config = self._config
-        connection = pycurl.Curl()
-        connection.setopt(pycurl.URL, gg_config.aws_credential_refresh_url)
-
-        # ------ client auth option ------ #
-        # TPM2.0 support, if private_key is provided as pkcs11 URI,
-        #   enable to use pkcs11 interface from openssl.
-        _enable_pkcs11_engine = False
-        if gg_config.private_key_path.startswith("pkcs11:"):
-            _enable_pkcs11_engine = True
-            connection.setopt(pycurl.SSLKEYTYPE, "eng")
-        connection.setopt(pycurl.SSLKEY, gg_config.private_key_path)
-
-        if gg_config.certificate_path.startswith("pkcs11:"):
-            _enable_pkcs11_engine = True
-            connection.setopt(pycurl.SSLCERTTYPE, "eng")
-        connection.setopt(pycurl.SSLCERT, gg_config.certificate_path)
-
-        if _enable_pkcs11_engine:
-            connection.setopt(pycurl.SSLENGINE, "pkcs11")
-
-        # ------ server auth option ------ #
-        connection.setopt(pycurl.SSL_VERIFYPEER, 1)
-        connection.setopt(pycurl.CAINFO, gg_config.ca_path)
-        connection.setopt(pycurl.CAPATH, None)
-        connection.setopt(pycurl.SSL_VERIFYHOST, 2)
-
-        # ------ set required header ------ #
-        headers = [f"x-amzn-iot-thingname:{gg_config.thing_name}"]
-        connection.setopt(pycurl.HTTPHEADER, headers)
-
-        # ------ execute the request and parse creds ------ #
-        response = connection.perform_rs()
-        status = connection.getinfo(pycurl.HTTP_CODE)
-        connection.close()
-
-        if status // 100 != 2:
-            _err_msg = f"failed to get cred: {status=}"
-            logger.debug(_err_msg)
-            raise ValueError(_err_msg)
-
-        try:
-            response_json = json.loads(response)
-            assert isinstance(response_json, dict), "response is not a json object"
-        except Exception as e:
-            _err_msg = f"cred response is invalid: {e!r}\nresponse={response}"
-            logger.debug(_err_msg)
-            raise ValueError(_err_msg)
-
-        try:
-            _creds = response_json["credentials"]
-            creds = Credentials(
-                access_key=_creds["accessKeyId"],
-                secret_key=_creds["secretAccessKey"],
-                token=_creds["sessionToken"],
-                expiry_time=_creds["expiration"],
+            _parsed_cert_uri = parse_pkcs11_uri(_path)
+            # NOTE: the cert pull from pkcs11 interface is in DER format
+            return _convert_to_pem(
+                _load_pkcs11_cert(
+                    pkcs11_lib=_pkcs11_cfg.pkcs11_lib,
+                    slot_id=_pkcs11_cfg.slot_id,
+                    user_pin=_pkcs11_cfg.user_pin,
+                    object_label=_parsed_cert_uri["object"],
+                )
             )
-            logger.debug(f"loaded credential={creds}")
-            return creds
-        except Exception as e:
-            _err_msg = f"failed to create Credentials object from response: {e!r}\nresponse_json={response_json}"
-            logger.debug(_err_msg)
-            raise ValueError(_err_msg)
+        return _convert_to_pem(Path(_path).read_bytes())
+
+    def _get_session(self):
+        """Get a session that using plain privkey."""
+        config = self._config
+        return Boto3SessionProvider(
+            endpoint=config.aws_credential_provider_endpoint,
+            role_alias=config.aws_role_alias,
+            certificate=self._load_certificate(),
+            private_key=config.private_key_path,
+            thing_name=config.thing_name,
+        ).get_session()
+
+    def _get_session_pkcs11(self):
+        """Get a session backed by privkey provided by pkcs11."""
+        config, pkcs11_cfg = self._config, self._config.pkcs11_config
+        assert pkcs11_cfg
+
+        input_pkcs11_cfg = aws_PKcs11Config(
+            pkcs11_lib=pkcs11_cfg.pkcs11_lib,
+            slot_id=int(pkcs11_cfg.slot_id),
+            user_pin=pkcs11_cfg.user_pin,
+        )
+
+        return Boto3SessionProvider(
+            endpoint=config.aws_credential_provider_endpoint,
+            role_alias=config.aws_role_alias,
+            certificate=self._load_certificate(),
+            thing_name=config.thing_name,
+            pkcs11=input_pkcs11_cfg,
+        ).get_session()
+
+    def get_session(self):
+        if self._config.private_key_path.startswith("pkcs11"):
+            return self._get_session_pkcs11()
+        return self._get_session()
