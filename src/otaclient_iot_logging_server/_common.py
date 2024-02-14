@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from typing_extensions import NotRequired
 
@@ -37,3 +37,18 @@ class Credentials(TypedDict):
     secret_key: str
     token: str
     expiry_time: str
+
+
+PKCS11URI = TypedDict(
+    "PKCS11URI",
+    {
+        "object": str,
+        "pin-value": NotRequired[str],
+        "token": str,
+        "type": Literal["cert", "private"],
+    },
+)
+"""
+NOTE: not all possible segments are defined here.
+        see https://www.rfc-editor.org/rfc/rfc7512.html for more details.
+"""
