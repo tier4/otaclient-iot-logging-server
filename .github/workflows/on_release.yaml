@@ -1,0 +1,32 @@
+name: on_release
+
+on:
+    release:
+        types: [published]
+
+permissions:
+    contents: write # upload artifacts requires this permission
+
+jobs:
+    build_wheel:
+        runs-on: ubuntu-22.04
+    
+        steps:
+            - name: Checkout source code
+              uses: actions/checkout@v4
+
+            - name: Setup python environment
+              uses: actions/setup-python@v5
+              with:
+                python-version: "3.8"
+
+            - name: Build wheel
+              run: |
+                python3 -m pip install -U pip
+                python3 -m pip install hatch
+                hatch build -t wheel
+
+            - name: Upload built wheel as release asset
+              uses: softprops/action-gh-release@v1
+              with:
+                files: dist/*.whl
