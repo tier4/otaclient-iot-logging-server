@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 def get_log_stream_name(thing_name: str, log_stream_sufix: str) -> str:
     """Compose LogStream name.
 
-    Schema: YYYY/MM/DD/<thing_name>
+    Schema: YYYY/MM/DD/<thing_name>/<suffix>
     """
     fmt = "{strftime:%Y/%m/%d}".format(strftime=datetime.utcnow())
     return f"{fmt}/{thing_name}/{log_stream_sufix}"
@@ -71,6 +71,8 @@ class AWSIoTLogger:
 
     @retry(max_retry=16, backoff_factor=2, backoff_max=32)
     def _create_log_group(self, log_group_name: str):
+        # TODO: (20240214) should we let the edge side iot_logging_server
+        #       create the log group?
         try:
             self._client.create_log_group(logGroupName=log_group_name)
             logger.info(f"{log_group_name=} has been created")
@@ -91,9 +93,9 @@ class AWSIoTLogger:
             )
             logger.info(f"{log_stream_name=}@{log_group_name} has been created")
             self._sequence_tokens = {}  # clear sequence token on new stream created
-        except self._exception.ResourceAlreadyExistsException:
+        except self._exception.ResourceAlreadyExistsException as e:
             logger.debug(
-                f"{log_stream_name=}@{log_group_name} already existed, skip creating"
+                f"{log_stream_name=}@{log_group_name} already existed, skip creating: {e.response}"
             )
         except Exception as e:
             logger.error(f"failed to create {log_stream_name=}@{log_group_name}: {e!r}")
@@ -119,6 +121,7 @@ class AWSIoTLogger:
         }
         if _seq_token := self._sequence_tokens.get(log_stream_name):
             request["sequenceToken"] = _seq_token
+
         # check message_list length
         if len(message_list) > self.MAX_LOGS_PER_PUT:
             logger.warning(
@@ -133,11 +136,12 @@ class AWSIoTLogger:
             #       see docs for more details.
             if _sequence_token := response.get("nextSequenceToken"):
                 self._sequence_tokens[log_stream_name] = _sequence_token
+            # logger.debug(f"successfully uploaded: {response}")
         except exceptions.DataAlreadyAcceptedException:
             pass
         except exceptions.InvalidSequenceTokenException as e:
             response = e.response
-            logger.debug(f"{response}: {e!r}")
+            logger.debug(f"invalid sequence token: {response}")
 
             _resp_err_msg: str = chain_query(e.response, "Error", "Message", default="")
             # null as the next sequenceToken means don't include any
@@ -150,7 +154,7 @@ class AWSIoTLogger:
             raise  # let the retry do the logging upload again
         except client.exceptions.ResourceNotFoundException as e:
             response = e.response
-            logger.info(f"{log_stream_name=} not found: {e!r}")
+            logger.debug(f"{log_stream_name=} not found: {e!r}")
             self._create_log_stream(
                 log_group_name=log_group_name, log_stream_name=log_stream_name
             )
@@ -166,7 +170,8 @@ class AWSIoTLogger:
     def thread_main(self) -> NoReturn:
         """Main entry for running this iot_logger in a thread."""
         while True:
-            # merge message
+            # merge LogMessages into the same source, identified by
+            # log_stream_suffix.
             message_dict: dict[str, list[LogMessage]] = {}
 
             _merge_count = 0
