@@ -72,11 +72,10 @@ class LoggingPostHandler:
 
 def launch_server(
     session_config: IoTSessionConfig,
-    max_logs_backlog: int,
+    queue: Queue[tuple[str, LogMessage]],
     max_logs_per_merge: int,
     interval: int,
 ):
-    queue = Queue(maxsize=max_logs_backlog)
     start_sending_msg_thread(
         AWSIoTLogger(
             session_config=session_config,
