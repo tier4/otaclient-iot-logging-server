@@ -22,6 +22,7 @@ from queue import Full, Queue
 
 from aiohttp import web
 from aiohttp.web import Request
+from typing_extensions import NoReturn
 
 from otaclient_iot_logging_server._common import LogMessage
 from otaclient_iot_logging_server.aws_iot_logger import (
@@ -75,7 +76,7 @@ def launch_server(
     queue: Queue[tuple[str, LogMessage]],
     max_logs_per_merge: int,
     interval: int,
-):
+) -> NoReturn:  # type: ignore
     start_sending_msg_thread(
         AWSIoTLogger(
             session_config=session_config,
@@ -90,4 +91,5 @@ def launch_server(
     app.add_routes([web.post(r"/{ecu_id}", handler._logging_post_handler)])
 
     # actual launch the server and serving
+    # typing: run_app is a NoReturn method
     web.run_app(app, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)
