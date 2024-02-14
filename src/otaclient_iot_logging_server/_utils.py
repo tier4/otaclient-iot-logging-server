@@ -22,6 +22,8 @@ from typing import Any, Callable, Optional, TypeVar
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import ParamSpec, TypeAlias
 
+from otaclient_iot_logging_server._common import PKCS11URI
+
 RT = TypeVar("RT")
 P = ParamSpec("P")
 NestedDict: TypeAlias = "dict[str, Any | 'NestedDict']"
@@ -111,3 +113,20 @@ def remove_prefix(_str: str, _prefix: str) -> str:
     if _str.startswith(_prefix):
         return _str.replace(_prefix, "", 1)
     return _str
+
+
+def parse_pkcs11_uri(_pkcs11_uri: str) -> PKCS11URI:
+    _, pkcs11_opts_str = _pkcs11_uri.split(":", maxsplit=1)
+    pkcs11_opts_dict = {}
+    for opt in pkcs11_opts_str.split(";"):
+        k, v = opt.split("=", maxsplit=1)
+        pkcs11_opts_dict[k] = v
+
+    return PKCS11URI(
+        {
+            "object": pkcs11_opts_dict.get("object", ""),
+            "pin-value": pkcs11_opts_dict.get("pin-value", ""),
+            "token": pkcs11_opts_dict.get("token", ""),
+            "type": pkcs11_opts_dict.get("type", ""),
+        }
+    )
