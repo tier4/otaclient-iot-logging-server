@@ -29,8 +29,7 @@ from otaclient_iot_logging_server.greengrass_config import IoTSessionConfig
 def _load_pkcs11_cert(
     pkcs11_lib: str,
     slot_id: str,
-    user_pin: str,
-    object_label: str,
+    private_key_label: str,
 ) -> bytes:
     """Load certificate from a pkcs11 interface(backed by a TPM2.0 chip).
 
@@ -42,9 +41,8 @@ def _load_pkcs11_cert(
         "/usr/bin/pkcs11-tool",
         "--module", pkcs11_lib,
         "--type", "cert",
-        "--pin", user_pin,
         "--slot", slot_id,
-        "--label", object_label,
+        "--label", private_key_label,
         "--read-object",
     ]
     # fmt: on
@@ -81,8 +79,7 @@ class Boto3Session:
                 _load_pkcs11_cert(
                     pkcs11_lib=_pkcs11_cfg.pkcs11_lib,
                     slot_id=_pkcs11_cfg.slot_id,
-                    user_pin=_pkcs11_cfg.user_pin,
-                    object_label=_parsed_cert_uri["object"],
+                    private_key_label=_parsed_cert_uri["object"],
                 )
             )
         return _convert_to_pem(Path(_path).read_bytes())
@@ -103,10 +100,12 @@ class Boto3Session:
         config, pkcs11_cfg = self._config, self._config.pkcs11_config
         assert pkcs11_cfg
 
+        _parsed_key_uri = parse_pkcs11_uri(config.private_key_path)
         input_pkcs11_cfg = aws_PKcs11Config(
             pkcs11_lib=pkcs11_cfg.pkcs11_lib,
             slot_id=int(pkcs11_cfg.slot_id),
             user_pin=pkcs11_cfg.user_pin,
+            private_key_label=_parsed_key_uri.get("object"),
         )
 
         return Boto3SessionProvider(
