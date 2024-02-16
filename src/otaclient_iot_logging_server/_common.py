@@ -43,7 +43,7 @@ PKCS11URI = TypedDict(
     "PKCS11URI",
     {
         "object": str,
-        "pin-value": NotRequired[str],
+        "pin-value": str,
         "token": str,
         "type": Literal["cert", "private"],
     },

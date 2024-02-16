@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from awsiot_credentialhelper.boto3_session import Boto3SessionProvider
 from awsiot_credentialhelper.boto3_session import Pkcs11Config as aws_PKcs11Config
@@ -30,6 +31,7 @@ def _load_pkcs11_cert(
     pkcs11_lib: str,
     slot_id: str,
     private_key_label: str,
+    user_pin: Optional[str] = None,
 ) -> bytes:
     """Load certificate from a pkcs11 interface(backed by a TPM2.0 chip).
 
@@ -45,6 +47,8 @@ def _load_pkcs11_cert(
         "--label", private_key_label,
         "--read-object",
     ]
+    if user_pin:
+        _cmd.extend(["--pin", user_pin])
     # fmt: on
     return subprocess.check_output(_cmd)
 
@@ -63,6 +67,7 @@ class Boto3Session:
 
     def __init__(self, config: IoTSessionConfig) -> None:
         self._config = config
+        self._pkcs11_cfg = config.pkcs11_config
 
     def _load_certificate(self) -> bytes:
         """
@@ -70,16 +75,16 @@ class Boto3Session:
         """
         _path = self._config.certificate_path
         if _path.startswith("pkcs11"):
-            _pkcs11_cfg = self._config.pkcs11_config
-            assert _pkcs11_cfg
+            assert (pkcs11_cfg := self._pkcs11_cfg)
 
             _parsed_cert_uri = parse_pkcs11_uri(_path)
             # NOTE: the cert pull from pkcs11 interface is in DER format
             return _convert_to_pem(
                 _load_pkcs11_cert(
-                    pkcs11_lib=_pkcs11_cfg.pkcs11_lib,
-                    slot_id=_pkcs11_cfg.slot_id,
+                    pkcs11_lib=pkcs11_cfg.pkcs11_lib,
+                    slot_id=pkcs11_cfg.slot_id,
                     private_key_label=_parsed_cert_uri["object"],
+                    user_pin=pkcs11_cfg.user_pin,
                 )
             )
         return _convert_to_pem(Path(_path).read_bytes())
@@ -97,8 +102,8 @@ class Boto3Session:
 
     def _get_session_pkcs11(self):
         """Get a session backed by privkey provided by pkcs11."""
-        config, pkcs11_cfg = self._config, self._config.pkcs11_config
-        assert pkcs11_cfg
+        config = self._config
+        assert (pkcs11_cfg := self._pkcs11_cfg)
 
         _parsed_key_uri = parse_pkcs11_uri(config.private_key_path)
         input_pkcs11_cfg = aws_PKcs11Config(
