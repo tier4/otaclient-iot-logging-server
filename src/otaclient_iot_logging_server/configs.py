@@ -17,10 +17,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Literal, List
 
 import yaml
-from pydantic import BaseModel, BeforeValidator, Field
+from pydantic import BaseModel, BeforeValidator, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
@@ -50,17 +50,18 @@ class ConfigurableLoggingServerConfig(BaseSettings):
     UPLOAD_INTERVAL: int = 60  # in seconds
 
 
-class AWSProfileInfo(BaseModel):
+class AWSProfileInfo(RootModel):
+
     class Profile(BaseModel):
         model_config = SettingsConfigDict(frozen=True)
         profile_name: str
         account_id: Annotated[str, BeforeValidator(str)] = Field(pattern=r"^\d{12}$")
         credential_endpoint: str
 
-    profiles: list[Profile]
+    root: List[Profile]
 
     def get_profile_info(self, profile_name: str) -> Profile:
-        for profile in self.profiles:
+        for profile in self.root:
             if profile.profile_name == profile_name:
                 return profile
         raise KeyError(f"failed to get profile info for {profile_name=}")
