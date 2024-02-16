@@ -36,14 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class LoggingPostHandler:
-    """A simple aiohttp server handler that receives logs from otaclient.
-
-    This server listen POST requests on /<ecu_id>, and then package the
-        incoming posted <data> into LogMessage instance as follow:
-            log_msg = LogMessage(timestamp=<unix_ts_millisec>, message=<data>)
-        and then push the <log_msg> instance into queue for aws_iot_logger
-        to process and upload to AWS cloudwatch.
-    """
+    """A simple aiohttp server handler that receives logs from otaclient."""
 
     def __init__(self, queue: Queue[tuple[str, LogMessage]]) -> None:
         self._queue = queue
@@ -90,6 +83,5 @@ def launch_server(
     app = web.Application()
     app.add_routes([web.post(r"/{ecu_id}", handler._logging_post_handler)])
 
-    # actual launch the server and serving
     # typing: run_app is a NoReturn method
     web.run_app(app, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)
