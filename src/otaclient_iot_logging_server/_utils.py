@@ -121,12 +121,4 @@ def parse_pkcs11_uri(_pkcs11_uri: str) -> PKCS11URI:
     for opt in pkcs11_opts_str.split(";"):
         k, v = opt.split("=", maxsplit=1)
         pkcs11_opts_dict[k] = v
-
-    return PKCS11URI(
-        {
-            "object": pkcs11_opts_dict.get("object", ""),
-            "pin-value": pkcs11_opts_dict.get("pin-value", ""),
-            "token": pkcs11_opts_dict.get("token", ""),
-            "type": pkcs11_opts_dict.get("type", ""),
-        }
-    )
+    return PKCS11URI(**pkcs11_opts_dict)
