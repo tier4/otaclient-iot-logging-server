@@ -39,18 +39,17 @@ dev = [
   "pytest==7.4.4",
   "pytest-asyncio==0.23.4",
   "pytest-mock==3.12.0",
-
 ]
 
 [project.scripts]
 iot_logging_server = "otaclient_iot_logging_server.__main__:main"
 
 [project.urls]
+Homepage = "https://github.com/tier4/otaclient-iot-logging-server"
 Source = "https://github.com/tier4/otaclient-iot-logging-server"
 
 [tool.black]
 line-length = 88
-target-version = ['py311']
 
 [tool.coverage.run]
 branch = false
@@ -70,6 +69,7 @@ skip_covered = true
 skip_empty = true
 
 [tool.hatch.envs.dev]
+type = "virtual"
 features = ["dev"]
 
 [tool.hatch.envs.dev.env-vars]
@@ -99,10 +99,6 @@ line_length = 88
 lines_before_imports = 2
 skip_gitignore = true
 known_first_party = ["otaclient_iot_logging_server"]
-
-[tool.pyright]
-exclude = ["**/__pycache__"]
-pythonVersion = "3.11"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
