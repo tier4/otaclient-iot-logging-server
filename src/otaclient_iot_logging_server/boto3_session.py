@@ -21,6 +21,7 @@ from typing import Optional
 
 from awsiot_credentialhelper.boto3_session import Boto3SessionProvider
 from awsiot_credentialhelper.boto3_session import Pkcs11Config as aws_PKcs11Config
+from boto3 import Session
 from OpenSSL import crypto
 
 from otaclient_iot_logging_server._utils import parse_pkcs11_uri
@@ -97,7 +98,7 @@ def _load_certificate(cert_path: str, pkcs11_cfg: Optional[PKCS11Config]) -> byt
 #
 
 
-def _get_session(config: IoTSessionConfig):
+def _get_session(config: IoTSessionConfig) -> Session:
     """Get a session that using plain privkey."""
     return Boto3SessionProvider(
         endpoint=config.aws_credential_provider_endpoint,
@@ -105,34 +106,34 @@ def _get_session(config: IoTSessionConfig):
         certificate=_load_certificate(config.certificate_path, config.pkcs11_config),
         private_key=config.private_key_path,
         thing_name=config.thing_name,
-    ).get_session()
+    ).get_session()  # type: ignore
 
 
-def _get_session_pkcs11(config: IoTSessionConfig):
+def _get_session_pkcs11(config: IoTSessionConfig) -> Session:
     """Get a session backed by privkey provided by pkcs11."""
-    assert (pkcs11_cfg := config.pkcs11_config)
+    assert (
+        pkcs11_cfg := config.pkcs11_config
+    ), "privkey is provided by pkcs11, but pkcs11_config is not available"
 
     _parsed_key_uri = parse_pkcs11_uri(config.private_key_path)
-    input_pkcs11_cfg = aws_PKcs11Config(
-        pkcs11_lib=pkcs11_cfg.pkcs11_lib,
-        slot_id=int(pkcs11_cfg.slot_id),
-        user_pin=pkcs11_cfg.user_pin,
-        private_key_label=_parsed_key_uri.get("object"),
-    )
-
     return Boto3SessionProvider(
         endpoint=config.aws_credential_provider_endpoint,
         role_alias=config.aws_role_alias,
         certificate=_load_certificate(config.certificate_path, config.pkcs11_config),
         thing_name=config.thing_name,
-        pkcs11=input_pkcs11_cfg,
-    ).get_session()
+        pkcs11=aws_PKcs11Config(
+            pkcs11_lib=pkcs11_cfg.pkcs11_lib,
+            slot_id=int(pkcs11_cfg.slot_id),
+            user_pin=pkcs11_cfg.user_pin,
+            private_key_label=_parsed_key_uri.get("object"),
+        ),
+    ).get_session()  # type: ignore
 
 
 # API
 
 
-def get_session(config: IoTSessionConfig):
+def get_session(config: IoTSessionConfig) -> Session:
     """Get a boto3 session with givin IoTSessionConfig.
 
     The behavior changes according to whether privkey is provided by
