@@ -17,11 +17,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, List, Literal
+from typing import List, Literal
 
 import yaml
 from pydantic import BaseModel, BeforeValidator, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing_extensions import Annotated
 
 _LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
 

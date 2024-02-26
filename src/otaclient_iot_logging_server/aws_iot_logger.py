@@ -26,7 +26,7 @@ from typing_extensions import NoReturn
 
 from otaclient_iot_logging_server._common import LogMessage
 from otaclient_iot_logging_server._utils import chain_query, retry
-from otaclient_iot_logging_server.boto3_session import Boto3Session
+from otaclient_iot_logging_server.boto3_session import get_session
 from otaclient_iot_logging_server.greengrass_config import IoTSessionConfig
 
 logger = logging.getLogger(__name__)
@@ -56,8 +56,8 @@ class AWSIoTLogger:
         max_logs_per_merge: int,
         interval: int,
     ):
-        _boto3_session = Boto3Session(session_config)
-        self._client = _boto3_session.get_session().client(service_name="logs")
+        _boto3_session = get_session(session_config)
+        self._client = _boto3_session.client(service_name="logs")
 
         self._session_config = session_config
         self._log_group_name = session_config.aws_cloudwatch_log_group
