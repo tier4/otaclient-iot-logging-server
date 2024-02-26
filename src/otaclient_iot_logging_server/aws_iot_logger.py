@@ -21,6 +21,7 @@ from collections import defaultdict
 from datetime import datetime
 from queue import Empty, Queue
 from threading import Thread
+from typing import Any
 
 from typing_extensions import NoReturn
 
@@ -57,11 +58,11 @@ class AWSIoTLogger:
         interval: int,
     ):
         _boto3_session = get_session(session_config)
-        self._client = _boto3_session.client(service_name="logs")
+        self._client = _boto3_session.client(service_name="logs")  # type: ignore
 
         self._session_config = session_config
         self._log_group_name = session_config.aws_cloudwatch_log_group
-        self._sequence_tokens = {}
+        self._sequence_tokens: dict[str, str | None] = {}
         self._interval = interval
         self._queue: Queue[tuple[str, LogMessage]] = queue
         # NOTE: add this limitation to ensure all of the log_streams in a merge
@@ -111,7 +112,7 @@ class AWSIoTLogger:
         Ref:
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs/client/put_log_events.html
         """
-        request = {
+        request: dict[str, Any] = {
             "logGroupName": self._log_group_name,
             "logStreamName": log_stream_name,
             "logEvents": message_list,

@@ -19,8 +19,6 @@ import logging
 import time
 from queue import Queue
 
-from typing_extensions import NoReturn
-
 from otaclient_iot_logging_server import __version__
 from otaclient_iot_logging_server import package_name as root_package_name
 from otaclient_iot_logging_server._common import LogMessage
@@ -41,7 +39,7 @@ class _LogTeeHandler(logging.Handler):
         self._queue = queue
         self._logstream_suffix = logstream_suffix
 
-    def emit(self, record) -> None:
+    def emit(self, record: logging.LogRecord) -> None:
         try:
             self._queue.put_nowait(
                 (
@@ -57,7 +55,7 @@ class _LogTeeHandler(logging.Handler):
 
 
 def _config_logging(
-    queue: Queue,
+    queue: Queue[tuple[str, LogMessage]],
     *,
     format: str,
     level: str,
@@ -86,8 +84,8 @@ def _config_logging(
     return root_logger
 
 
-def main() -> NoReturn:
-    queue = Queue(maxsize=server_cfg.MAX_LOGS_BACKLOG)
+def main() -> None:
+    queue: Queue[tuple[str, LogMessage]] = Queue(maxsize=server_cfg.MAX_LOGS_BACKLOG)
 
     root_logger = _config_logging(
         queue,
