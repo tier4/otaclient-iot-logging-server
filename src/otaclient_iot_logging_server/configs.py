@@ -51,17 +51,16 @@ class ConfigurableLoggingServerConfig(BaseSettings):
     UPLOAD_INTERVAL: int = 60  # in seconds
 
 
-class AWSProfileInfo(RootModel):
+class _AWSProfile(BaseModel):
+    model_config = SettingsConfigDict(frozen=True)
+    profile_name: str
+    account_id: Annotated[str, BeforeValidator(str)] = Field(pattern=r"^\d{12}$")
+    credential_endpoint: str
 
-    class Profile(BaseModel):
-        model_config = SettingsConfigDict(frozen=True)
-        profile_name: str
-        account_id: Annotated[str, BeforeValidator(str)] = Field(pattern=r"^\d{12}$")
-        credential_endpoint: str
 
-    root: List[Profile]
+class AWSProfileInfo(RootModel[List[_AWSProfile]]):
 
-    def get_profile_info(self, profile_name: str) -> Profile:
+    def get_profile_info(self, profile_name: str) -> _AWSProfile:
         for profile in self.root:
             if profile.profile_name == profile_name:
                 return profile

@@ -36,7 +36,7 @@ class FixedConfig(BaseModel):
 _MISSING = object()
 
 
-def chain_query(_obj: NestedDict, *_paths: str, default=_MISSING) -> Any:
+def chain_query(_obj: NestedDict, *_paths: str, default: object = _MISSING) -> Any:
     """Chain access a nested dict <_obj> according to search <_paths>.
 
     For example:
@@ -117,7 +117,7 @@ def remove_prefix(_str: str, _prefix: str) -> str:
 
 def parse_pkcs11_uri(_pkcs11_uri: str) -> PKCS11URI:
     _, pkcs11_opts_str = _pkcs11_uri.split(":", maxsplit=1)
-    pkcs11_opts_dict = {}
+    pkcs11_opts_dict: dict[str, Any] = {}
     for opt in pkcs11_opts_str.split(";"):
         k, v = opt.split("=", maxsplit=1)
         pkcs11_opts_dict[k] = v

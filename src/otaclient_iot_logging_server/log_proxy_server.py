@@ -22,7 +22,6 @@ from queue import Full, Queue
 
 from aiohttp import web
 from aiohttp.web import Request
-from typing_extensions import NoReturn
 
 from otaclient_iot_logging_server._common import LogMessage
 from otaclient_iot_logging_server.aws_iot_logger import (
@@ -42,7 +41,7 @@ class LoggingPostHandler:
         self._queue = queue
 
     # route: POST /{ecu_id}
-    async def _logging_post_handler(self, request: Request):
+    async def logging_post_handler(self, request: Request):
         """
         NOTE: use <ecu_id> as log_stream_suffix, each ECU has its own
               logging stream for uploading.
@@ -69,7 +68,7 @@ def launch_server(
     queue: Queue[tuple[str, LogMessage]],
     max_logs_per_merge: int,
     interval: int,
-) -> NoReturn:  # type: ignore
+) -> None:
     start_sending_msg_thread(
         AWSIoTLogger(
             session_config=session_config,
@@ -81,7 +80,7 @@ def launch_server(
 
     handler = LoggingPostHandler(queue=queue)
     app = web.Application()
-    app.add_routes([web.post(r"/{ecu_id}", handler._logging_post_handler)])
+    app.add_routes([web.post(r"/{ecu_id}", handler.logging_post_handler)])
 
-    # typing: run_app is a NoReturn method
-    web.run_app(app, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)
+    # typing: run_app is a NoReturn method, unless received signal
+    web.run_app(app, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)  # type: ignore

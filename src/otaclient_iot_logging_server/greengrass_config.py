@@ -21,7 +21,7 @@ import logging
 import re
 from functools import partial
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 from urllib.parse import urljoin
 
 import yaml
@@ -89,7 +89,7 @@ def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
 
     NOTE(20240207): not consider TPM for ggv1.
     """
-    loaded_cfg = json.loads(_raw_cfg)
+    loaded_cfg: dict[str, Any] = json.loads(_raw_cfg)
     assert isinstance(loaded_cfg, dict), f"invalid cfg: {_raw_cfg}"
 
     _raw_thing_arn = chain_query(loaded_cfg, "coreThing", "thingArn")
@@ -127,7 +127,7 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
         https://tier4.atlassian.net/wiki/spaces/HIICS/pages/2544042770/TPM+Ubuntu+22.04+Greengrass+v2.
         https://datatracker.ietf.org/doc/html/rfc7512.
     """
-    loaded_cfg = yaml.safe_load(_raw_cfg)
+    loaded_cfg: dict[str, Any] = yaml.safe_load(_raw_cfg)
     assert isinstance(loaded_cfg, dict), f"invalid cfg: {_raw_cfg}"
 
     thing_name = chain_query(loaded_cfg, "system", "thingName")
