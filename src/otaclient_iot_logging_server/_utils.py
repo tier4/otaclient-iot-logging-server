@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 from functools import partial, wraps
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar, overload
 
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import ParamSpec, TypeAlias
@@ -71,6 +71,28 @@ def chain_query(_obj: NestedDict, *_paths: str, default: object = _MISSING) -> A
         if default is not _MISSING:
             return default
         raise ValueError(f"chain query with {_paths=} failed: {e!r}") from e
+
+
+@overload
+def retry(
+    func: None = None,
+    /,
+    backoff_factor: float = 0.1,
+    backoff_max: int = 6,
+    max_retry: int = 6,
+    retry_on_exceptions: tuple[type[Exception], ...] = (Exception,),
+) -> partial[Any]: ...
+
+
+@overload
+def retry(
+    func: Callable[P, RT],
+    /,
+    backoff_factor: float = ...,
+    backoff_max: int = ...,
+    max_retry: int = ...,
+    retry_on_exceptions: tuple[type[Exception], ...] = ...,
+) -> Callable[P, RT]: ...
 
 
 def retry(
