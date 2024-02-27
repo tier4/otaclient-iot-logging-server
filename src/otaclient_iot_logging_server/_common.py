@@ -43,12 +43,14 @@ PKCS11URI = TypedDict(
     "PKCS11URI",
     {
         "object": str,
-        "pin-value": str,
-        "token": str,
-        "type": Literal["cert", "private"],
+        "pin-value": NotRequired[str],
+        "token": NotRequired[str],
+        "type": NotRequired[Literal["cert", "private"]],
     },
 )
 """
-NOTE: not all possible segments are defined here.
+NOTE: Not all possible segments are defined here.
         see https://www.rfc-editor.org/rfc/rfc7512.html for more details.
+      In normal case, <object>(priv_key_label) is enough, as long as there is
+        only one private key inside the slot.
 """
