@@ -3,7 +3,7 @@
         "caPath": "root.ca.pem",
         "certPath": "gg.cert.pem",
         "keyPath": "gg.private.key",
-        "thingArn": "arn:aws:iot:region:012345678901:thing/thing_name",
+        "thingArn": "arn:aws:iot:region:012345678901:thing/profile-dev-edge-ggv1-Core",
         "iotHost": "abcdefghijklm-ats.iot.region.amazonaws.com",
         "ggHost": "greengrass-ats.iot.region.amazonaws.com",
         "keepAlive": 30
