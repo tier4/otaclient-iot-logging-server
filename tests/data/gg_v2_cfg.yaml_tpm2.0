@@ -3,7 +3,7 @@ system:
   privateKeyPath: "pkcs11:object=greengrass_key;type=private;pin-value=greengrass_userpin"
   rootCaPath: "/greengrass/certs/root.ca.pem"
   rootpath: "/greengrass/v2"
-  thingName: "thing_name"
+  thingName: "profile-dev-edge-ggv2-Core"
 services:
   aws.greengrass.Nucleus:
     componentType: "NUCLEUS"
