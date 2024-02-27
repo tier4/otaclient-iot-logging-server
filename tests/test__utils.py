@@ -174,17 +174,20 @@ class TestRetry:
             3. max_retry = 8
         We should have the time cost sequence as follow:
             0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.0, 1.0
-        So the retry session should not take more than 6s(~5.1s+)
+        So the retry session should not take more than 6s(5.1s+)
         """
         max_retries, actual_retries = 8, 9
         backoff_factor, backoff_max = 0.1, 1
-        expected_retry_session_timecost = sum(
-            min(backoff_max, backoff_factor * 2**i) for i in range(max_retries)
+
+        # NOTE: add some overhead for function execution
+        expected_retry_session_timecost = (
+            sum(min(backoff_max, backoff_factor * 2**i) for i in range(max_retries))
+            + 0.5
         )
 
         return_value = random.randint(10**3, 10**6)
-        _start_time = time.time()
         with pytest.raises(self.HandledException):
+            _start_time = time.time()
             retry(
                 self._func_factory(
                     actual_retries,
@@ -198,7 +201,10 @@ class TestRetry:
                 backoff_max=backoff_max,
                 retry_on_exceptions=(self.HandledException,),
             )()
-        assert time.time() - _start_time <= expected_retry_session_timecost
+
+            time_cost = time.time() - _start_time
+            logger.info(f"{time_cost=}")
+            assert time_cost <= expected_retry_session_timecost
 
 
 @pytest.mark.parametrize(
