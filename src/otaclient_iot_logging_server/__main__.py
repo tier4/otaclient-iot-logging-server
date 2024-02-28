@@ -15,79 +15,22 @@
 
 from __future__ import annotations
 
-import logging
-import time
 from queue import Queue
 
 from otaclient_iot_logging_server import __version__
-from otaclient_iot_logging_server import package_name as root_package_name
-from otaclient_iot_logging_server._common import LogMessage
+from otaclient_iot_logging_server._common import LogsQueue
+from otaclient_iot_logging_server._log_setting import config_logging
+from otaclient_iot_logging_server.aws_iot_logger import start_aws_iot_logger_thread
 from otaclient_iot_logging_server.configs import server_cfg
-from otaclient_iot_logging_server.greengrass_config import parse_config
 from otaclient_iot_logging_server.log_proxy_server import launch_server
 
 
-class _LogTeeHandler(logging.Handler):
-    """Tee the local loggings to a queue."""
-
-    def __init__(
-        self,
-        queue: Queue[tuple[str, LogMessage]],
-        logstream_suffix: str,
-    ) -> None:
-        super().__init__()
-        self._queue = queue
-        self._logstream_suffix = logstream_suffix
-
-    def emit(self, record: logging.LogRecord) -> None:
-        try:
-            self._queue.put_nowait(
-                (
-                    self._logstream_suffix,
-                    LogMessage(
-                        timestamp=int(time.time()) * 1000,  # milliseconds
-                        message=self.format(record),
-                    ),
-                )
-            )
-        except Exception:
-            pass
-
-
-def _config_logging(
-    queue: Queue[tuple[str, LogMessage]],
-    *,
-    format: str,
-    level: str,
-    enable_server_log: bool,
-    server_logstream_suffix: str,
-):
-    # NOTE: for the root logger, set to CRITICAL to filter away logs from other
-    #       external modules unless reached CRITICAL level.
-    logging.basicConfig(level=logging.CRITICAL, format=format, force=True)
-    # NOTE: set the <loglevel> to the package root logger
-    root_logger = logging.getLogger(root_package_name)
-    root_logger.setLevel(level)
-
-    if enable_server_log and server_logstream_suffix:
-        _tee_handler = _LogTeeHandler(
-            queue=queue,
-            logstream_suffix=server_logstream_suffix,
-        )
-        _fmt = logging.Formatter(fmt=server_cfg.SERVER_LOGGING_LOG_FORMAT)
-        _tee_handler.setFormatter(_fmt)
-
-        # attach the log tee handler to the root logger
-        root_logger.addHandler(_tee_handler)
-        root_logger.info(f"enable server logs upload with {server_logstream_suffix=}")
-
-    return root_logger
-
-
 def main() -> None:
-    queue: Queue[tuple[str, LogMessage]] = Queue(maxsize=server_cfg.MAX_LOGS_BACKLOG)
+    # server scope log entries pipe
+    queue: LogsQueue = Queue(maxsize=server_cfg.MAX_LOGS_BACKLOG)
 
-    root_logger = _config_logging(
+    # ------ configure local logging ------ #
+    root_logger = config_logging(
         queue,
         format=server_cfg.SERVER_LOGGING_LOG_FORMAT,
         level=server_cfg.SERVER_LOGGING_LEVEL,
@@ -95,17 +38,14 @@ def main() -> None:
         server_logstream_suffix=server_cfg.SERVER_LOGSTREAM_SUFFIX,
     )
 
+    # ------ start server ------ #
     root_logger.info(
         f"launching iot_logging_server({__version__}) at http://{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
     )
     root_logger.info(f"iot_logging_server config: \n{server_cfg}")
 
-    launch_server(
-        parse_config(),
-        queue=queue,
-        max_logs_per_merge=server_cfg.MAX_LOGS_PER_MERGE,
-        interval=server_cfg.UPLOAD_INTERVAL,
-    )
+    start_aws_iot_logger_thread(queue)
+    launch_server(queue=queue)  # NoReturn
 
 
 if __name__ == "__main__":
