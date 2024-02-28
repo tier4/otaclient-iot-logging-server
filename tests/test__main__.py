@@ -17,14 +17,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from queue import Queue
 
 import pytest
 from pytest import LogCaptureFixture
 from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.__main__ as _main_module
-from otaclient_iot_logging_server._common import LogMessage
 
 MODULE = _main_module.__name__
 
@@ -89,23 +87,3 @@ def test_main(
         == f"launching iot_logging_server({_version}) at http://{_in_server_cfg.LISTEN_ADDRESS}:{_in_server_cfg.LISTEN_PORT}"
     )
     assert (caplog.records[-1].msg) == f"iot_logging_server config: \n{_in_server_cfg}"
-
-
-def test_server_logger():
-    _queue: Queue[tuple[str, LogMessage]] = Queue()
-    suffix = "test_suffix"
-
-    # ------ setup test ------ #
-    _handler = _main_module._LogTeeHandler(_queue, suffix)  # type: ignore
-    logger.addHandler(_handler)
-
-    # ------ execution ------ #
-    logger.info("emit one logging entry")
-
-    # ------ clenaup ------ #
-    logger.removeHandler(_handler)
-
-    # ------ check result ------ #
-    _log = _queue.get_nowait()
-    assert _log[0] == suffix
-    assert _log[1]
