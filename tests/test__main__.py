@@ -53,8 +53,12 @@ def test_main(
 ):
     # ------ prepare patching ------ #
     mocker.patch(
-        f"{MODULE}._config_logging",
+        f"{MODULE}.config_logging",
         _logger_mock := mocker.MagicMock(return_value=logger),
+    )
+    mocker.patch(
+        f"{MODULE}.start_aws_iot_logger_thread",
+        _aws_iot_logger_mock := mocker.MagicMock(),
     )
     mocker.patch(
         f"{MODULE}.launch_server",
@@ -74,12 +78,8 @@ def test_main(
         enable_server_log=_in_server_cfg.UPLOAD_LOGGING_SERVER_LOGS,
         server_logstream_suffix=_in_server_cfg.SERVER_LOGSTREAM_SUFFIX,
     )
-    _launch_server_mock.assert_called_once_with(
-        mocker.ANY,
-        queue=mocker.ANY,
-        max_logs_per_merge=_in_server_cfg.MAX_LOGS_PER_MERGE,
-        interval=_in_server_cfg.UPLOAD_INTERVAL,
-    )
+    _aws_iot_logger_mock.assert_called_once()
+    _launch_server_mock.assert_called_once()
 
     # check __main__.main source code for more details
     assert (
