@@ -54,19 +54,17 @@ line-length = 88
 
 [tool.coverage.run]
 branch = false
-include = ["otaclient_iot_logging_server/**/*.py"]
+source = ["otaclient_iot_logging_server"]
 
 [tool.coverage.report]
 exclude_also = [
   "def __repr__",
-  "if cfg.DEBUG_MODE",
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
   "class .*\\bProtocol\\):",
   "@(abc\\.)?abstractmethod",
 ]
 show_missing = true
-skip_covered = true
 skip_empty = true
 
 [tool.hatch.envs.dev]
