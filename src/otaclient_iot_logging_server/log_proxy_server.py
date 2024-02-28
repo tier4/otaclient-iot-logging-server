@@ -23,7 +23,7 @@ from queue import Full, Queue
 from aiohttp import web
 from aiohttp.web import Request
 
-from otaclient_iot_logging_server._common import LogMessage
+from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server.configs import server_cfg
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class LoggingPostHandler:
     """A simple aiohttp server handler that receives logs from otaclient."""
 
-    def __init__(self, queue: Queue[tuple[str, LogMessage]]) -> None:
+    def __init__(self, queue: LogsQueue) -> None:
         self._queue = queue
 
     # route: POST /{ecu_id}
