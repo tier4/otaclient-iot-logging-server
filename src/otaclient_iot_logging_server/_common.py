@@ -15,9 +15,12 @@
 
 from __future__ import annotations
 
+from queue import Queue
 from typing import Literal, TypedDict
 
 from typing_extensions import NotRequired
+
+LogsQueue = Queue[tuple[str, "LogMessage"]]
 
 
 class LogMessage(TypedDict):
