@@ -19,14 +19,15 @@ import logging
 import time
 from collections import defaultdict
 from datetime import datetime
-from queue import Empty, Queue
+from queue import Empty
 from threading import Thread
 from typing import Any
 
 from typing_extensions import NoReturn
 
-from otaclient_iot_logging_server._common import LogMessage
+from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server._utils import chain_query, retry
+from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.boto3_session import get_session
 from otaclient_iot_logging_server.greengrass_config import IoTSessionConfig
 
@@ -53,7 +54,7 @@ class AWSIoTLogger:
     def __init__(
         self,
         session_config: IoTSessionConfig,
-        queue: Queue[tuple[str, LogMessage]],
+        queue: LogsQueue,
         max_logs_per_merge: int,
         interval: int,
     ):
@@ -64,7 +65,7 @@ class AWSIoTLogger:
         self._log_group_name = session_config.aws_cloudwatch_log_group
         self._sequence_tokens: dict[str, str | None] = {}
         self._interval = interval
-        self._queue: Queue[tuple[str, LogMessage]] = queue
+        self._queue: LogsQueue = queue
         # NOTE: add this limitation to ensure all of the log_streams in a merge
         #       will definitely have entries less than MAX_LOGS_PER_PUT
         self._max_logs_per_merge = min(max_logs_per_merge, self.MAX_LOGS_PER_PUT)
@@ -185,7 +186,16 @@ class AWSIoTLogger:
             time.sleep(self._interval)
 
 
-def start_sending_msg_thread(iot_logger: AWSIoTLogger) -> Thread:
+def start_aws_iot_logger_thread(
+    queue: LogsQueue, session_config: IoTSessionConfig
+) -> Thread:
+    iot_logger = AWSIoTLogger(
+        session_config=session_config,
+        queue=queue,
+        max_logs_per_merge=server_cfg.MAX_LOGS_PER_MERGE,
+        interval=server_cfg.UPLOAD_INTERVAL,
+    )
+
     _thread = Thread(target=iot_logger.thread_main, daemon=True)
     _thread.start()
     logger.debug("iot logger thread started")
