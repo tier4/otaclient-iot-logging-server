@@ -24,12 +24,7 @@ from aiohttp import web
 from aiohttp.web import Request
 
 from otaclient_iot_logging_server._common import LogMessage
-from otaclient_iot_logging_server.aws_iot_logger import (
-    AWSIoTLogger,
-    start_sending_msg_thread,
-)
 from otaclient_iot_logging_server.configs import server_cfg
-from otaclient_iot_logging_server.greengrass_config import IoTSessionConfig
 
 logger = logging.getLogger(__name__)
 
@@ -63,21 +58,7 @@ class LoggingPostHandler:
         return web.Response(status=HTTPStatus.OK)
 
 
-def launch_server(
-    session_config: IoTSessionConfig,
-    queue: Queue[tuple[str, LogMessage]],
-    max_logs_per_merge: int,
-    interval: int,
-) -> None:
-    start_sending_msg_thread(
-        AWSIoTLogger(
-            session_config=session_config,
-            queue=queue,
-            max_logs_per_merge=max_logs_per_merge,
-            interval=interval,
-        )
-    )
-
+def launch_server(queue: Queue[tuple[str, LogMessage]]) -> None:
     handler = LoggingPostHandler(queue=queue)
     app = web.Application()
     app.add_routes([web.post(r"/{ecu_id}", handler.logging_post_handler)])
