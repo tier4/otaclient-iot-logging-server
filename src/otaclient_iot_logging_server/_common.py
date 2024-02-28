@@ -18,9 +18,9 @@ from __future__ import annotations
 from queue import Queue
 from typing import Literal, TypedDict
 
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, TypeAlias
 
-LogsQueue = Queue[tuple[str, "LogMessage"]]
+LogsQueue: TypeAlias = "Queue[tuple[str, LogMessage]]"
 
 
 class LogMessage(TypedDict):
