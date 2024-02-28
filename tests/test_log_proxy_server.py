@@ -117,6 +117,7 @@ class TestLogProxyServer:
 
     async def test_server(self, client_sesion: aiohttp.ClientSession):
         # ------ execution ------ #
+        logger.info(f"sending {self.TOTAL_MSG_NUM} msgs to {self.SERVER_URL}...")
         for item in self._msgs:
             _ecu_id, _msg = item.ecu_id, item.message
             _log_upload_endpoint_url = urljoin(self.SERVER_URL, _ecu_id)
@@ -125,6 +126,7 @@ class TestLogProxyServer:
 
         # ------ check result ------ #
         # ensure the all msgs are sent in order to the queue by the server.
+        logger.info("checking all the received messages...")
         for item in self._msgs:
             _ecu_id, _log_msg = self._queue.get_nowait()
             assert _ecu_id == item.ecu_id
