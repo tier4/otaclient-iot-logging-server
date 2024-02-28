@@ -29,7 +29,10 @@ from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server._utils import chain_query, retry
 from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.boto3_session import get_session
-from otaclient_iot_logging_server.greengrass_config import IoTSessionConfig
+from otaclient_iot_logging_server.greengrass_config import (
+    IoTSessionConfig,
+    parse_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -186,11 +189,9 @@ class AWSIoTLogger:
             time.sleep(self._interval)
 
 
-def start_aws_iot_logger_thread(
-    queue: LogsQueue, session_config: IoTSessionConfig
-) -> Thread:
+def start_aws_iot_logger_thread(queue: LogsQueue) -> Thread:
     iot_logger = AWSIoTLogger(
-        session_config=session_config,
+        session_config=parse_config(),
         queue=queue,
         max_logs_per_merge=server_cfg.MAX_LOGS_PER_MERGE,
         interval=server_cfg.UPLOAD_INTERVAL,
