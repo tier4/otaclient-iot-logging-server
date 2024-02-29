@@ -20,7 +20,6 @@ import os
 import random
 from dataclasses import dataclass
 from queue import Queue
-from typing import NamedTuple
 from urllib.parse import urljoin
 
 import aiohttp
@@ -47,9 +46,26 @@ class _ServerConfig:
 _test_server_cfg = _ServerConfig()
 
 
-class MessageEntry(NamedTuple):
+@dataclass
+class MessageEntry:
     ecu_id: str
     message: str
+
+
+mocked_ECUs_list = ("main_ecu", "sub_ecu0", "sub_ecu1", "sub_ecu2")
+
+
+def generate_random_msgs(
+    ecus_list: tuple[str, ...] = mocked_ECUs_list,
+    msg_len: int = 16,
+    msg_num: int = 4096,
+) -> list[MessageEntry]:
+    _res: list[MessageEntry] = []
+    for _ in range(msg_num):
+        _ecu, *_ = random.sample(ecus_list, 1)
+        _msg = os.urandom(msg_len).hex()
+        _res.append(MessageEntry(_ecu, _msg))
+    return _res
 
 
 class TestLogProxyServer:
@@ -57,15 +73,7 @@ class TestLogProxyServer:
     SERVER_URL = (
         f"http://{_test_server_cfg.LISTEN_ADDRESS}:{_test_server_cfg.LISTEN_PORT}/"
     )
-    ECUS = ("main_ecu", "sub_ecu0", "sub_ecu1", "sub_ecu2")
-    MSG_LEN = 16
     TOTAL_MSG_NUM = 4096
-
-    @classmethod
-    def _generate_random_msg(cls) -> MessageEntry:
-        _ecu, *_ = random.sample(cls.ECUS, 1)
-        _msg = os.urandom(cls.MSG_LEN).hex()
-        return MessageEntry(_ecu, _msg)
 
     @pytest.fixture(autouse=True)
     async def launch_server(self):
@@ -111,9 +119,7 @@ class TestLogProxyServer:
 
     @pytest.fixture(autouse=True)
     def prepare_test_data(self):
-        self._msgs: list[MessageEntry] = []
-        for _ in range(self.TOTAL_MSG_NUM):
-            self._msgs.append(self._generate_random_msg())
+        self._msgs = generate_random_msgs(msg_num=self.TOTAL_MSG_NUM)
 
     async def test_server(self, client_sesion: aiohttp.ClientSession):
         # ------ execution ------ #
