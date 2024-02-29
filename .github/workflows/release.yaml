@@ -16,6 +16,10 @@ jobs:
 
       - name: Setup python environment
         uses: actions/setup-python@v5
+        with:
+          # use the minimum py ver we support to
+          # generate the wheel.
+          python-version: "3.8"
 
       - name: Build wheel
         run: |
