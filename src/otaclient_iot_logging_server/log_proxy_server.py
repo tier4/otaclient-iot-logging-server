@@ -43,6 +43,10 @@ class LoggingPostHandler:
         """
         _ecu_id = request.match_info["ecu_id"]
         _raw_logging = await request.text()
+        # don't allow empty request
+        if not _raw_logging:
+            return web.Response(status=HTTPStatus.BAD_REQUEST)
+
         _logging_msg = LogMessage(
             timestamp=int(time.time()) * 1000,  # milliseconds
             message=_raw_logging,
