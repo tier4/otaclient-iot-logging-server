@@ -35,13 +35,6 @@ class LogEvent(TypedDict):
     sequenceToken: NotRequired[str]
 
 
-class Credentials(TypedDict):
-    access_key: str
-    secret_key: str
-    token: str
-    expiry_time: str
-
-
 PKCS11URI = TypedDict(
     "PKCS11URI",
     {
