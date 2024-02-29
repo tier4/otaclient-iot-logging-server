@@ -27,10 +27,6 @@ from typing_extensions import Annotated
 _LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
 
 
-def _csv_to_set(_in: str) -> set[str]:
-    return set(map(str.strip, _in.split(",")))
-
-
 class ConfigurableLoggingServerConfig(BaseSettings):
     model_config = SettingsConfigDict(frozen=True, validate_default=True)
     # the default location of greengrass configuration files.
@@ -54,10 +50,7 @@ class ConfigurableLoggingServerConfig(BaseSettings):
     MAX_LOGS_PER_MERGE: int = 512
     UPLOAD_INTERVAL: int = 60  # in seconds
 
-    ALLOWED_ECUS: Annotated[
-        Set[str],
-        BeforeValidator(_csv_to_set),
-    ] = {"autoware"}
+    ALLOWED_ECUS: Set[str] = {"autoware"}
     """Comma separated list of allowed ECU ids."""
 
 
