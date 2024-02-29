@@ -27,6 +27,10 @@ from typing_extensions import Annotated
 _LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
 
 
+def _csv_to_list(_in: str) -> list[str]:
+    return list(map(str.strip, _in.split(",")))
+
+
 class ConfigurableLoggingServerConfig(BaseSettings):
     model_config = SettingsConfigDict(frozen=True, validate_default=True)
     # the default location of greengrass configuration files.
@@ -49,6 +53,12 @@ class ConfigurableLoggingServerConfig(BaseSettings):
     MAX_LOGS_BACKLOG: int = 4096
     MAX_LOGS_PER_MERGE: int = 512
     UPLOAD_INTERVAL: int = 60  # in seconds
+
+    ALLOWED_ECUS: Annotated[
+        List[str],
+        BeforeValidator(_csv_to_list),
+    ] = ["autoware"]
+    """Comma separated list of allowed ECU ids."""
 
 
 class _AWSProfile(BaseModel):
