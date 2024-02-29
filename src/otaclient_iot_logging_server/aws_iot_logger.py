@@ -21,11 +21,10 @@ from collections import defaultdict
 from datetime import datetime
 from queue import Empty
 from threading import Thread
-from typing import Any
 
 from typing_extensions import NoReturn
 
-from otaclient_iot_logging_server._common import LogMessage, LogsQueue
+from otaclient_iot_logging_server._common import LogEvent, LogMessage, LogsQueue
 from otaclient_iot_logging_server._utils import chain_query, retry
 from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.boto3_session import get_session
@@ -116,11 +115,11 @@ class AWSIoTLogger:
         Ref:
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs/client/put_log_events.html
         """
-        request: dict[str, Any] = {
-            "logGroupName": self._log_group_name,
-            "logStreamName": log_stream_name,
-            "logEvents": message_list,
-        }
+        request = LogEvent(
+            logGroupName=self._log_group_name,
+            logStreamName=log_stream_name,
+            logEvents=message_list,
+        )
         if _seq_token := self._sequence_tokens.get(log_stream_name):
             request["sequenceToken"] = _seq_token
 
