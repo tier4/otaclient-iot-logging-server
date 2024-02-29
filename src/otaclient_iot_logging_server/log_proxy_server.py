@@ -43,8 +43,8 @@ class LoggingPostHandler:
         """
         _ecu_id = request.match_info["ecu_id"]
         _raw_logging = await request.text()
-        # don't allow empty request
-        if not _raw_logging:
+        # don't allow empty request or unknowned ECUs
+        if not _raw_logging or _ecu_id not in server_cfg.ALLOWED_ECUS:
             return web.Response(status=HTTPStatus.BAD_REQUEST)
 
         _logging_msg = LogMessage(

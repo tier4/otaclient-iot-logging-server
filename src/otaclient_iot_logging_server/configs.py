@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Literal
+from typing import List, Literal, Set
 
 import yaml
 from pydantic import BaseModel, BeforeValidator, Field, RootModel
@@ -27,8 +27,8 @@ from typing_extensions import Annotated
 _LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
 
 
-def _csv_to_list(_in: str) -> list[str]:
-    return list(map(str.strip, _in.split(",")))
+def _csv_to_set(_in: str) -> set[str]:
+    return set(map(str.strip, _in.split(",")))
 
 
 class ConfigurableLoggingServerConfig(BaseSettings):
@@ -55,9 +55,9 @@ class ConfigurableLoggingServerConfig(BaseSettings):
     UPLOAD_INTERVAL: int = 60  # in seconds
 
     ALLOWED_ECUS: Annotated[
-        List[str],
-        BeforeValidator(_csv_to_list),
-    ] = ["autoware"]
+        Set[str],
+        BeforeValidator(_csv_to_set),
+    ] = {"autoware"}
     """Comma separated list of allowed ECU ids."""
 
 
