@@ -153,12 +153,14 @@ class AWSIoTLogger:
             self._create_log_stream(log_stream_name)
             raise
         except Exception as e:
+            # NOTE: for unhandled exception, we just log it and ignore,
+            #       leave for the developer to properly handle it
+            #       in the future!
             logger.error(
                 f"put_log_events failure: {e!r}\n"
                 f"log_group_name={self._log_group_name}, \n"
                 f"log_stream_name={log_stream_name}"
             )
-            raise
 
     def thread_main(self) -> NoReturn:
         """Main entry for running this iot_logger in a thread."""
@@ -179,12 +181,15 @@ class AWSIoTLogger:
                     break
 
             for log_stream_suffix, logs in message_dict.items():
-                self.send_messages(
-                    get_log_stream_name(
-                        self._session_config.thing_name, log_stream_suffix
-                    ),
-                    logs,
-                )
+                try:
+                    self.send_messages(
+                        get_log_stream_name(
+                            self._session_config.thing_name, log_stream_suffix
+                        ),
+                        logs,
+                    )
+                except Exception:
+                    pass  # don't let the exception breaks the main loop
             time.sleep(self._interval)
 
 
