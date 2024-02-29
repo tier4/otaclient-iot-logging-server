@@ -14,14 +14,14 @@
 
 
 from __future__ import annotations
-from collections import defaultdict
 
-import os
-from queue import Queue
 import logging
+import os
 import random
 import time
+from collections import defaultdict
 from datetime import datetime
+from queue import Queue
 from uuid import uuid1
 
 import pytest

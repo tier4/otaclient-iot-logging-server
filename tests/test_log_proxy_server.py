@@ -18,12 +18,16 @@ from __future__ import annotations
 import logging
 import os
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from http import HTTPStatus
 from queue import Queue
+from typing import Set
 from urllib.parse import urljoin
 
 import aiohttp
+import aiohttp.client_exceptions
 import pytest
+from pytest_mock import MockerFixture
 from aiohttp import web
 
 import otaclient_iot_logging_server.log_proxy_server as log_server_module
@@ -41,6 +45,9 @@ class _ServerConfig:
 
     LISTEN_ADDRESS: str = "127.0.0.1"
     LISTEN_PORT: int = 8083
+    ALLOWED_ECUS: Set[str] = field(
+        default_factory=lambda: {"main_ecu", "sub_ecu0", "sub_ecu1", "sub_ecu2"}
+    )
 
 
 _test_server_cfg = _ServerConfig()
@@ -76,11 +83,13 @@ class TestLogProxyServer:
     TOTAL_MSG_NUM = 4096
 
     @pytest.fixture(autouse=True)
-    async def launch_server(self):
+    async def launch_server(self, mocker: MockerFixture):
         """
         See https://docs.aiohttp.org/en/stable/web_advanced.html#custom-resource-implementation
             for more details.
         """
+        mocker.patch(f"{MODULE}.server_cfg", _test_server_cfg)
+
         queue: LogsQueue = Queue()
         self._queue = queue
 
@@ -138,3 +147,21 @@ class TestLogProxyServer:
             assert _ecu_id == item.ecu_id
             assert _log_msg["message"] == item.message
         assert self._queue.empty()
+
+    @pytest.mark.parametrize(
+        "_ecu_id, _data",
+        [
+            # unknowned ECU's request will be dropped
+            ("bad_ecu_id", "valid_msg"),
+            # empty message will be dropped
+            ("main_ecu", ""),
+        ],
+    )
+    async def test_reject_invalid_request(
+        self, _ecu_id: str, _data: str, client_sesion: aiohttp.ClientSession
+    ):
+        with pytest.raises(aiohttp.client_exceptions.ClientResponseError) as exc_info:
+            _log_upload_endpoint_url = urljoin(self.SERVER_URL, _ecu_id)
+            async with client_sesion.post(_log_upload_endpoint_url, data=_data):
+                pass  # raise_for_status is set on session
+        assert exc_info.value.status == HTTPStatus.BAD_REQUEST

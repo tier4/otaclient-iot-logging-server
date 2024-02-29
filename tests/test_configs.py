@@ -50,6 +50,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "MAX_LOGS_BACKLOG": 4096,
                 "MAX_LOGS_PER_MERGE": 512,
                 "UPLOAD_INTERVAL": 60,
+                "ALLOWED_ECUS": {"autoware"},
             },
         ),
         # test#1: frequently changed settings
@@ -58,6 +59,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "LISTEN_ADDRESS": "172.16.1.1",
                 "SERVER_LOGGING_LEVEL": "ERROR",
                 "UPLOAD_INTERVAL": "30",
+                "ALLOWED_ECUS": '["main_ecu", "sub_ecu"]',
             },
             {
                 "GREENGRASS_V1_CONFIG": "/greengrass/config/config.json",
@@ -72,6 +74,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "MAX_LOGS_BACKLOG": 4096,
                 "MAX_LOGS_PER_MERGE": 512,
                 "UPLOAD_INTERVAL": 30,
+                "ALLOWED_ECUS": {"main_ecu", "sub_ecu"},
             },
         ),
         # test#2: change everything
@@ -89,6 +92,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "MAX_LOGS_BACKLOG": "1024",
                 "MAX_LOGS_PER_MERGE": "128",
                 "UPLOAD_INTERVAL": "10",
+                "ALLOWED_ECUS": '["main_ecu", "sub_ecu"]',
             },
             {
                 "GREENGRASS_V1_CONFIG": "ggv1_cfg.json",
@@ -103,6 +107,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "MAX_LOGS_BACKLOG": 1024,
                 "MAX_LOGS_PER_MERGE": 128,
                 "UPLOAD_INTERVAL": 10,
+                "ALLOWED_ECUS": {"main_ecu", "sub_ecu"},
             },
         ),
     ],
