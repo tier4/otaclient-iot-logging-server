@@ -73,9 +73,6 @@ class AWSIoTLogger:
         #       will definitely have entries less than MAX_LOGS_PER_PUT
         self._max_logs_per_merge = min(max_logs_per_merge, self.MAX_LOGS_PER_PUT)
 
-        # unconditionally create log_group and log_stream, do nothing if existed.
-        self._create_log_group()
-
     @retry(max_retry=16, backoff_factor=2, backoff_max=32)
     def _create_log_group(self):
         # TODO: (20240214) should we let the edge side iot_logging_server
@@ -181,6 +178,9 @@ class AWSIoTLogger:
 
     def thread_main(self) -> NoReturn:
         """Main entry for running this iot_logger in a thread."""
+        # unconditionally create log_group and log_stream, do nothing if existed.
+        self._create_log_group()
+
         while True:
             # merge LogMessages into the same source, identified by
             # log_stream_suffix.
