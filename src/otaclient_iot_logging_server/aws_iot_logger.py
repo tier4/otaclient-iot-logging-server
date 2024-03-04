@@ -22,6 +22,7 @@ from datetime import datetime
 from queue import Empty
 from threading import Thread
 
+import awscrt.exceptions
 from typing_extensions import NoReturn
 
 from otaclient_iot_logging_server._common import LogEvent, LogMessage, LogsQueue
@@ -87,6 +88,14 @@ class AWSIoTLogger:
             logger.debug(
                 f"{log_group_name=} already existed, skip creating: {e.response}"
             )
+        except ValueError as e:
+            if e.__cause__ and isinstance(e.__cause__, awscrt.exceptions.AwsCrtError):
+                logger.error(
+                    (f"failed to create mtls connection to remote: {e.__cause__}")
+                )
+                raise e.__cause__
+            logger.error(f"failed to create {log_group_name=}: {e!r}")
+            raise
         except Exception as e:
             logger.error(f"failed to create {log_group_name=}: {e!r}")
             raise
@@ -105,6 +114,14 @@ class AWSIoTLogger:
             logger.debug(
                 f"{log_stream_name=}@{log_group_name} already existed, skip creating: {e.response}"
             )
+        except ValueError as e:
+            if e.__cause__ and isinstance(e.__cause__, awscrt.exceptions.AwsCrtError):
+                logger.error(
+                    (f"failed to create mtls connection to remote: {e.__cause__}")
+                )
+                raise e.__cause__
+            logger.error(f"failed to create {log_stream_name=}@{log_group_name}: {e!r}")
+            raise
         except Exception as e:
             logger.error(f"failed to create {log_stream_name=}@{log_group_name}: {e!r}")
             raise
