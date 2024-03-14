@@ -50,7 +50,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "MAX_LOGS_BACKLOG": 4096,
                 "MAX_LOGS_PER_MERGE": 512,
                 "UPLOAD_INTERVAL": 60,
-                "ALLOWED_ECUS": {"autoware"},
+                "ALLOWED_ECUS": None,
             },
         ),
         # test#1: frequently changed settings
