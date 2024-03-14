@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Literal, Set
+from typing import List, Literal, Optional, Set
 
 import yaml
 from pydantic import BaseModel, BeforeValidator, Field, RootModel
@@ -50,7 +50,7 @@ class ConfigurableLoggingServerConfig(BaseSettings):
     MAX_LOGS_PER_MERGE: int = 512
     UPLOAD_INTERVAL: int = 60  # in seconds
 
-    ALLOWED_ECUS: Set[str] = {"autoware"}
+    ALLOWED_ECUS: Optional[Set[str]] = None
     """Comma separated list of allowed ECU ids."""
 
 
