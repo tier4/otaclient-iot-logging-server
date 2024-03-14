@@ -22,4 +22,4 @@ The behaviors of the iot_logging_server can be configured with the following env
 | MAX_LOGS_BACKLOG | `4096` | Max pending log entries |
 | MAX_LOGS_PER_MERGE | `512` | Max log entries in a merge group |
 | UPLOAD_INTERVAL | `60` | Interval of uploading log batches to cloud |
-| ALLOWED_ECUS | `["autoware"]` | An JSON array contains the allowed ECUs'ID, only logs from allowed ECUs will be processed |
+| ALLOWED_ECUS | | An JSON array contains the allowed ECUs'ID, when set, only logs from allowed ECUs will be processed |
