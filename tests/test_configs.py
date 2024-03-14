@@ -40,7 +40,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
             {
                 "GREENGRASS_V1_CONFIG": "/greengrass/config/config.json",
                 "GREENGRASS_V2_CONFIG": "/greengrass/v2/init_config/config.yaml",
-                "AWS_PROFILE_INFO": "/opt/ota/iot_logger/aws_profile_info.yaml",
+                "AWS_PROFILE_INFO": "/opt/ota/iot-logger/aws_profile_info.yaml",
                 "LISTEN_ADDRESS": "127.0.0.1",
                 "LISTEN_PORT": 8083,
                 "UPLOAD_LOGGING_SERVER_LOGS": False,
@@ -64,7 +64,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
             {
                 "GREENGRASS_V1_CONFIG": "/greengrass/config/config.json",
                 "GREENGRASS_V2_CONFIG": "/greengrass/v2/init_config/config.yaml",
-                "AWS_PROFILE_INFO": "/opt/ota/iot_logger/aws_profile_info.yaml",
+                "AWS_PROFILE_INFO": "/opt/ota/iot-logger/aws_profile_info.yaml",
                 "LISTEN_ADDRESS": "172.16.1.1",
                 "LISTEN_PORT": 8083,
                 "UPLOAD_LOGGING_SERVER_LOGS": False,

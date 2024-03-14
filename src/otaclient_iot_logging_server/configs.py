@@ -34,7 +34,7 @@ class ConfigurableLoggingServerConfig(BaseSettings):
     GREENGRASS_V1_CONFIG: str = "/greengrass/config/config.json"
     GREENGRASS_V2_CONFIG: str = "/greengrass/v2/init_config/config.yaml"
 
-    AWS_PROFILE_INFO: str = "/opt/ota/iot_logger/aws_profile_info.yaml"
+    AWS_PROFILE_INFO: str = "/opt/ota/iot-logger/aws_profile_info.yaml"
     """The path to aws_profile_info.yaml."""
 
     LISTEN_ADDRESS: str = "127.0.0.1"
