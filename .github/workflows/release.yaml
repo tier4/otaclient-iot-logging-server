@@ -21,13 +21,20 @@ jobs:
           # generate the wheel.
           python-version: "3.8"
 
-      - name: Build wheel
+      - name: Build wheel and calculate checksum
         run: |
           python3 -m pip install -q -U pip
           pip install -q -U hatch
           hatch build -t wheel
+          for WHL in dist/*.whl; \
+            do \
+              sha256sum ${WHL} | sed -E "s@(\w+)\s+.*@sha256:\1@" > \
+                ${WHL}.checksum; \
+            done
 
       - name: Upload built wheel as release asset
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/*.whl
+          files: |
+            dist/*.whl
+            dist/*.checksum
