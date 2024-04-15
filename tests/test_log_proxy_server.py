@@ -17,11 +17,11 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from http import HTTPStatus
 from queue import Queue
-from typing import Set
 from urllib.parse import urljoin
 
 import aiohttp
@@ -37,6 +37,7 @@ from otaclient_iot_logging_server.log_proxy_server import LoggingPostHandler
 logger = logging.getLogger(__name__)
 
 MODULE = log_server_module.__name__
+TEST_DIR = Path(__file__).parent / "data"
 
 
 @dataclass
@@ -45,9 +46,7 @@ class _ServerConfig:
 
     LISTEN_ADDRESS: str = "127.0.0.1"
     LISTEN_PORT: int = 8083
-    ALLOWED_ECUS: Set[str] = field(
-        default_factory=lambda: {"main_ecu", "sub_ecu0", "sub_ecu1", "sub_ecu2"}
-    )
+    ECU_INFO_YAML: Path = TEST_DIR / "ecu_info.yaml"
 
 
 _test_server_cfg = _ServerConfig()
@@ -59,7 +58,8 @@ class MessageEntry:
     message: str
 
 
-mocked_ECUs_list = ("main_ecu", "sub_ecu0", "sub_ecu1", "sub_ecu2")
+# see data/ecu_info.yaml
+mocked_ECUs_list = ("main", "sub1", "sub2", "sub3")
 
 
 def generate_random_msgs(
@@ -154,7 +154,7 @@ class TestLogProxyServer:
             # unknowned ECU's request will be dropped
             ("bad_ecu_id", "valid_msg"),
             # empty message will be dropped
-            ("main_ecu", ""),
+            ("main", ""),
         ],
     )
     async def test_reject_invalid_request(

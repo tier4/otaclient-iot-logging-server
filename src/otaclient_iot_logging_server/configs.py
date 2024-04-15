@@ -50,7 +50,7 @@ class ConfigurableLoggingServerConfig(BaseSettings):
     MAX_LOGS_PER_MERGE: int = 512
     UPLOAD_INTERVAL: int = 60  # in seconds
 
-    ECU_INFO_YAML = "/boot/ota/ecu_info.yaml"
+    ECU_INFO_YAML: str = "/boot/ota/ecu_info.yaml"
 
 
 class _AWSProfile(BaseModel):
