@@ -40,6 +40,9 @@ class LoggingPostHandler:
         stripped_ecu_info = parse_ecu_info(server_cfg.ECU_INFO_YAML)
         if stripped_ecu_info:
             self._allowed_ecus = stripped_ecu_info.ecu_id_set
+            logger.info(
+                f"setup allowed_ecu_id from ecu_info.yaml: {stripped_ecu_info.ecu_id_set}"
+            )
 
     # route: POST /{ecu_id}
     async def logging_post_handler(self, request: Request):
