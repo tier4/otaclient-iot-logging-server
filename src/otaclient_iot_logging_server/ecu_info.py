@@ -51,7 +51,7 @@ class ECUInfo(BaseFixedConfig):
     secondaries: List[ECUContact] = Field(default_factory=list)
 
     @cached_property
-    def ecu_id_list(self) -> set[str]:
+    def ecu_id_set(self) -> set[str]:
         res = [ecu_contact.ecu_id for ecu_contact in self.secondaries]
         res.append(self.ecu_id)
         return set(res)
