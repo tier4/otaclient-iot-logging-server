@@ -18,12 +18,12 @@ classifiers = [
 ]
 dependencies = [
   "aiohttp>=3.9.2, <3.10.0",
-  "awsiot_credentialhelper==0.6.0",
-  "boto3==1.34.35",
-  "botocore==1.34.35",
+  "awsiot_credentialhelper>=0.6.0, <0.7.0",
+  "boto3>=1.34.35, <1.35.0",
+  "botocore==1.34.35, <1.35.0",
   "pyopenssl==24.0.0",
-  "pydantic==2.6.0",
-  "pydantic-settings==2.1.0",
+  "pydantic==2.7.0",
+  "pydantic-settings==2.2.1",
   "pyyaml==6.0.1",
   "typing_extensions>=4.0",
 ]
