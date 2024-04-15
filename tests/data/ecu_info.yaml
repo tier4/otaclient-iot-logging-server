@@ -1,0 +1,15 @@
+format_version: 1
+ecu_id: "main"
+bootloader: "grub"
+secondaries:
+  - ecu_id: "sub1"
+    ip_addr: "192.168.10.21"
+  - ecu_id: "sub2"
+    ip_addr: "192.168.10.22"
+  - ecu_id: "sub3"
+    ip_addr: "192.168.10.23"
+available_ecu_ids:
+  - "main"
+  - "sub1"
+  - "sub2"
+  - "sub3"
