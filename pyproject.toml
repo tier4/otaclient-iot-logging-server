@@ -97,6 +97,7 @@ testpaths = ["tests"]
 [tool.coverage.run]
 branch = true
 source = ["otaclient_iot_logging_server"]
+relative_files = true
 
 [tool.coverage.report]
 exclude_also = [
