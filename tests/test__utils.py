@@ -15,9 +15,9 @@
 
 from __future__ import annotations
 
-import time
 import logging
 import random
+import time
 from typing import Any
 
 import pytest
@@ -25,9 +25,9 @@ import pytest
 from otaclient_iot_logging_server._utils import (
     NestedDict,
     chain_query,
-    retry,
-    remove_prefix,
     parse_pkcs11_uri,
+    remove_prefix,
+    retry,
 )
 
 logger = logging.getLogger(__name__)
@@ -178,7 +178,6 @@ class TestRetry:
         """
         max_retries, actual_retries = 8, 9
         backoff_factor, backoff_max = 0.1, 1
-
         # NOTE: add some overhead for function execution
         expected_retry_session_timecost = (
             sum(min(backoff_max, backoff_factor * 2**i) for i in range(max_retries))

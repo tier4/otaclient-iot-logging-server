@@ -25,7 +25,6 @@ from otaclient_iot_logging_server.configs import (
     ConfigurableLoggingServerConfig,
     load_profile_info,
 )
-
 from tests.conftest import TEST_DATA_DPATH
 
 AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
@@ -118,7 +117,6 @@ def test_server_config_loading(
 ):
     # patch environmental variables while clearing all already
     mocker.patch.dict(os.environ, _mock_envs, clear=True)
-
     # NOTE: compare by dict to prevent double import from env vars
     assert _expected == ConfigurableLoggingServerConfig().model_dump()
 

@@ -24,24 +24,21 @@ from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.greengrass_config
 from otaclient_iot_logging_server.greengrass_config import (
-    get_profile_from_thing_name,
     IoTSessionConfig,
     PKCS11Config,
+    get_profile_from_thing_name,
+    parse_config,
     parse_v1_config,
     parse_v2_config,
-    parse_config,
 )
-
 from tests.conftest import TEST_DATA_DPATH
 
 logger = logging.getLogger(__name__)
 
 MODULE = otaclient_iot_logging_server.greengrass_config.__name__
-
 # NOTE: AWS_PROFILE_INFO, GREENGRASS_V1_CONFIG and GREENGRASS_V2_CONFIG
 #       environmental variables are properly set in pyproject.toml.
 #       profile_info in configs.py is populated with aws_profile_info.yaml in tests/data.
-
 # NOTE: gg_v1_cfg and gg_v2_cfg is the same, besides the thing_name,
 #       this will be used as evidence to check which config is used.
 GG_V1_CFG_FPATH = TEST_DATA_DPATH / "gg_v1_cfg.json"
@@ -98,8 +95,6 @@ CFG_FROM_GG_V2_TPM2 = IoTSessionConfig(
 )
 def test_get_profile_from_thing_name(_in: str, _expected: str):
     assert get_profile_from_thing_name(_in) == _expected
-
-
 #
 # ------ greengrass v1 configuration ------ #
 #
@@ -110,8 +105,6 @@ def test_get_profile_from_thing_name(_in: str, _expected: str):
 )
 def test_parse_v1_config(_raw_cfg: str, _expected: IoTSessionConfig):
     assert parse_v1_config(_raw_cfg) == _expected
-
-
 #
 # ------ greengrass v2 configuration ------ #
 #
@@ -124,8 +117,6 @@ def test_parse_v1_config(_raw_cfg: str, _expected: IoTSessionConfig):
 )
 def test_parse_v2_config(_raw_cfg: str, _expected: IoTSessionConfig):
     assert parse_v2_config(_raw_cfg) == _expected
-
-
 #
 # ------ test parse_config entry point ------ #
 #

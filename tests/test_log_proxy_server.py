@@ -17,18 +17,18 @@ from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
 import random
 from dataclasses import dataclass
 from http import HTTPStatus
+from pathlib import Path
 from queue import Queue
 from urllib.parse import urljoin
 
 import aiohttp
 import aiohttp.client_exceptions
 import pytest
-from pytest_mock import MockerFixture
 from aiohttp import web
+from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.log_proxy_server as log_server_module
 from otaclient_iot_logging_server._common import LogsQueue
@@ -56,8 +56,6 @@ _test_server_cfg = _ServerConfig()
 class MessageEntry:
     ecu_id: str
     message: str
-
-
 # see data/ecu_info.yaml
 mocked_ECUs_list = ("main", "sub1", "sub2", "sub3")
 
@@ -98,10 +96,8 @@ class TestLogProxyServer:
         # mute the aiohttp server logging
         aiohttp_server_logger = logging.getLogger("aiohttp")
         aiohttp_server_logger.setLevel("ERROR")
-
         # add handler to the server
         app.add_routes([web.post(r"/{ecu_id}", handler.logging_post_handler)])
-
         # star the server
         runner = web.AppRunner(app)
         try:
@@ -138,7 +134,6 @@ class TestLogProxyServer:
             _log_upload_endpoint_url = urljoin(self.SERVER_URL, _ecu_id)
             async with client_sesion.post(_log_upload_endpoint_url, data=_msg):
                 pass  # raise_for_status is set on session
-
         # ------ check result ------ #
         # ensure the all msgs are sent in order to the queue by the server.
         logger.info("checking all the received messages...")

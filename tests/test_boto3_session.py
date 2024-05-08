@@ -14,6 +14,7 @@
 
 
 from __future__ import annotations
+
 from typing import Any
 
 import pytest
@@ -21,15 +22,16 @@ from awsiot_credentialhelper.boto3_session import Boto3SessionProvider
 from awsiot_credentialhelper.boto3_session import Pkcs11Config as aws_PKcs11Config
 from pytest_mock import MockerFixture
 
-
 import otaclient_iot_logging_server.boto3_session
 from otaclient_iot_logging_server._utils import parse_pkcs11_uri
-from otaclient_iot_logging_server.boto3_session import _convert_to_pem, get_session  # type: ignore
+from otaclient_iot_logging_server.boto3_session import (  # type: ignore
+    _convert_to_pem,
+    get_session,
+)
 from otaclient_iot_logging_server.greengrass_config import (
     IoTSessionConfig,
     PKCS11Config,
 )
-
 from tests.conftest import TEST_DATA_DPATH
 
 MODULE = otaclient_iot_logging_server.boto3_session.__name__
@@ -126,9 +128,7 @@ def test_get_session(
     mocker.patch(
         f"{MODULE}._load_certificate", mocker.MagicMock(return_value=_MOCKED_CERT)
     )
-
     # ------ execution ------ #
     get_session(_config)
-
     # ------ check result ------ #
     _boto3_session_provider_mock.assert_called_once_with(**_expected_call)

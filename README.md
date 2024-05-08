@@ -2,7 +2,7 @@
 
 A logging server that uploads logs sent from otaclient to AWS cloudwatch.
 
-This iot-logger is expected to be installed on the main ECU, with greengrass certificates and otaclient config file(ecu_info.yaml) installed. 
+This iot-logger is expected to be installed on the main ECU, with greengrass certificates and otaclient config file(ecu_info.yaml) installed.
 
 ## Usage
 
@@ -28,6 +28,6 @@ The behaviors of the iot_logging_server can be configured with the following env
 
 ### ecu_info.yaml
 
-If `ecu_info.yaml` presented and valid, iot-logger will only accept logs from known ECU ids. 
+If `ecu_info.yaml` presented and valid, iot-logger will only accept logs from known ECU ids.
 The known ECU ids are retrieved from parsing `ecu_info.secondaries` field.
-Currently only ECU id will be checked, IP checking is not performed as sub ECU otaclient might send logging from different IPs if ECU has multiple interfaces. 
+Currently only ECU id will be checked, IP checking is not performed as sub ECU otaclient might send logging from different IPs if ECU has multiple interfaces.

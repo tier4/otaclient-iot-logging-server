@@ -18,6 +18,7 @@ Basically the one copied from otaclient, with only parsing fields we care about.
 
 
 from __future__ import annotations
+
 import logging
 from functools import cached_property
 from pathlib import Path
@@ -25,7 +26,6 @@ from typing import List, Optional
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, IPvAnyAddress
-
 
 logger = logging.getLogger(__name__)
 

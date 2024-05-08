@@ -27,8 +27,8 @@ from typing_extensions import NoReturn
 
 from otaclient_iot_logging_server._common import LogEvent, LogMessage, LogsQueue
 from otaclient_iot_logging_server._utils import chain_query, retry
-from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.boto3_session import get_session
+from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.greengrass_config import (
     IoTSessionConfig,
     parse_config,
@@ -50,7 +50,6 @@ class AWSIoTLogger:
     """
     Ref: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs.html
     """
-
     # this upper bound is defined by boto3, check doc for more details.
     MAX_LOGS_PER_PUT = 10_000
 

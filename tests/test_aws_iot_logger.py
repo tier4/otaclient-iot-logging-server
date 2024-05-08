@@ -30,8 +30,8 @@ from pytest_mock import MockerFixture
 import otaclient_iot_logging_server.aws_iot_logger
 from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server.aws_iot_logger import (
-    get_log_stream_name,
     AWSIoTLogger,
+    get_log_stream_name,
 )
 
 logger = logging.getLogger(__name__)
@@ -96,13 +96,11 @@ class TestAWSIoTLogger:
     @pytest.fixture
     def prepare_test_data(self):
         _msgs = generate_random_msgs(self.MSG_LEN, self.MSG_NUM)
-
         # prepare result for test_thread_main
         _merged_msgs: dict[str, list[LogMessage]] = defaultdict(list)
         for _ecu_id, _log_msg in _msgs:
             _merged_msgs[_ecu_id].append(_log_msg)
         self._merged_msgs = _merged_msgs
-
         # prepare the queue for test
         _queue: LogsQueue = Queue()
         for _item in _msgs:
@@ -115,7 +113,6 @@ class TestAWSIoTLogger:
         # NOTE: a hack here to interrupt the while loop
         _time_mocker.sleep.side_effect = self._TestFinished
         mocker.patch(f"{MODULE}.time", _time_mocker)
-
         # ------ prepare test self ------ #
         # The following bound variables will be used in thread_main method.
         # NOTE: another hack to let all entries being merged within one
@@ -124,11 +121,9 @@ class TestAWSIoTLogger:
         self.send_messages = self._mocked_send_messages
         self._interval = 6  # place holder
         self._session_config = mocker.MagicMock()  # place holder
-
         # for holding test results
         # mocked_send_messages will record each calls in this dict
         self._test_result: dict[str, list[LogMessage]] = {}
-
         # mock get_log_stream_name to let it returns the log_stream_suffix
         # as it, make the test easier.
         # see get_log_stream_name signature for more details
@@ -140,12 +135,10 @@ class TestAWSIoTLogger:
         self._create_log_group = mocked__create_log_group = mocker.MagicMock(
             spec=AWSIoTLogger._create_log_group
         )
-
         # ------ execution ------ #
         with pytest.raises(self._TestFinished):
             func_to_test.__get__(self)()
         logger.info("execution finished")
-
         # ------ check result ------ #
         mocked__create_log_group.assert_called_once()
         # confirm the send_messages mock receives the expecting calls.
