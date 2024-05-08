@@ -61,7 +61,7 @@ def test_get_log_stream_name(
     _thing_name: str, _suffix: str, _expected: str, mocker: MockerFixture
 ):
     _datetime_mock = mocker.MagicMock(spec=datetime)
-    _datetime_mock.utcnow.return_value = _UNIX_EPOCH
+    _datetime_mock.now.return_value = _UNIX_EPOCH
     mocker.patch(f"{MODULE}.datetime", _datetime_mock)
     assert get_log_stream_name(_thing_name, _suffix) == _expected
 
