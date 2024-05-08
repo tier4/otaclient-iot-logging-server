@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 from queue import Queue
@@ -37,7 +38,7 @@ class _LogTeeHandler(logging.Handler):
         self._logstream_suffix = logstream_suffix
 
     def emit(self, record: logging.LogRecord) -> None:
-        try:
+        with contextlib.suppress(Exception):
             self._queue.put_nowait(
                 (
                     self._logstream_suffix,
@@ -47,8 +48,6 @@ class _LogTeeHandler(logging.Handler):
                     ),
                 )
             )
-        except Exception:
-            pass
 
 
 def config_logging(

@@ -29,7 +29,7 @@ TESTS_DIR = Path(__file__).parent / "data"
     (
         (
             "ecu_info.yaml",
-            set(["sub1", "sub2", "sub3", "main"]),
+            {"sub1", "sub2", "sub3", "main"},
         ),
     ),
 )

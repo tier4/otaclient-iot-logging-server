@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 from collections import defaultdict
@@ -198,15 +199,14 @@ class AWSIoTLogger:
                     break
 
             for log_stream_suffix, logs in message_dict.items():
-                try:
+                with contextlib.suppress(Exception):
                     self.send_messages(
                         get_log_stream_name(
                             self._session_config.thing_name, log_stream_suffix
                         ),
                         logs,
                     )
-                except Exception:
-                    pass  # don't let the exception breaks the main loop
+                    # don't let the exception breaks the main loop
             time.sleep(self._interval)
 
 
