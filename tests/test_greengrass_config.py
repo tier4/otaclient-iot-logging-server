@@ -95,6 +95,8 @@ CFG_FROM_GG_V2_TPM2 = IoTSessionConfig(
 )
 def test_get_profile_from_thing_name(_in: str, _expected: str):
     assert get_profile_from_thing_name(_in) == _expected
+
+
 #
 # ------ greengrass v1 configuration ------ #
 #
@@ -105,6 +107,8 @@ def test_get_profile_from_thing_name(_in: str, _expected: str):
 )
 def test_parse_v1_config(_raw_cfg: str, _expected: IoTSessionConfig):
     assert parse_v1_config(_raw_cfg) == _expected
+
+
 #
 # ------ greengrass v2 configuration ------ #
 #
@@ -117,6 +121,8 @@ def test_parse_v1_config(_raw_cfg: str, _expected: IoTSessionConfig):
 )
 def test_parse_v2_config(_raw_cfg: str, _expected: IoTSessionConfig):
     assert parse_v2_config(_raw_cfg) == _expected
+
+
 #
 # ------ test parse_config entry point ------ #
 #

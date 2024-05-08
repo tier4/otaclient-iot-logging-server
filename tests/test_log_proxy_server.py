@@ -56,6 +56,8 @@ _test_server_cfg = _ServerConfig()
 class MessageEntry:
     ecu_id: str
     message: str
+
+
 # see data/ecu_info.yaml
 mocked_ECUs_list = ("main", "sub1", "sub2", "sub3")
 

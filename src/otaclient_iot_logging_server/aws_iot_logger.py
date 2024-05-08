@@ -50,6 +50,7 @@ class AWSIoTLogger:
     """
     Ref: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs.html
     """
+
     # this upper bound is defined by boto3, check doc for more details.
     MAX_LOGS_PER_PUT = 10_000
 
