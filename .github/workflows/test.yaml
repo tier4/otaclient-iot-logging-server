@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: Checkout commit
         uses: actions/checkout@v4
+        with:
+          # sonarcloud needs main branch's ref
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,7 +35,6 @@ jobs:
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
-        continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
