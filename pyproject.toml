@@ -53,7 +53,7 @@ Source = "https://github.com/tier4/otaclient-iot-logging-server"
 line-length = 88
 
 [tool.coverage.run]
-branch = false
+branch = true
 source = ["otaclient_iot_logging_server"]
 
 [tool.coverage.report]
