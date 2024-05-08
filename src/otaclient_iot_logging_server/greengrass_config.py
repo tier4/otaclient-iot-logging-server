@@ -33,14 +33,17 @@ from otaclient_iot_logging_server.configs import profile_info, server_cfg
 logger = logging.getLogger(__name__)
 
 
+THINGNAME_PA = re.compile(r"^(thing[/:])?(?P<profile>[\w-]+)-edge-(?P<id>[\w-]+)-.*$")
+THINGNAME_MAXLENGH = 128 + len("thing/")
+"""ThingName's max length is 128. See https://docs.aws.amazon.com/iot/latest/apireference/API_ThingDocument.html."""
+
+
 def get_profile_from_thing_name(_in: str) -> str:
     """Get profile from specific thing_name naming scheme.
 
     Schema: thing/<profile>-edge-<id>-Core
     """
-    THINGNAME_PA = re.compile(
-        r"^(thing[/:])?(?P<profile>[\w-]+)-edge-(?P<id>[\w-]+)-.*$"
-    )
+    assert len(_in) <= THINGNAME_MAXLENGH, f"invalid thing_name: {_in}"
 
     _ma = THINGNAME_PA.match(_in)
     assert _ma, f"invalid resource id: {_in}"
