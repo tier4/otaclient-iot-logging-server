@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 import time
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from queue import Empty
 from threading import Thread
 
@@ -42,7 +42,7 @@ def get_log_stream_name(thing_name: str, log_stream_sufix: str) -> str:
 
     Schema: YYYY/MM/DD/<thing_name>/<suffix>
     """
-    fmt = "{strftime:%Y/%m/%d}".format(strftime=datetime.utcnow())
+    fmt = "{strftime:%Y/%m/%d}".format(strftime=datetime.now(timezone.utc))
     return f"{fmt}/{thing_name}/{log_stream_sufix}"
 
 

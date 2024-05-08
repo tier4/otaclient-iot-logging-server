@@ -83,7 +83,7 @@ def generate_random_msgs(
     return _res
 
 
-class TestAWSIoTLogger_thread_main:
+class TestAWSIoTLogger:
     MSG_LEN = 16
     MSG_NUM = 4096
 

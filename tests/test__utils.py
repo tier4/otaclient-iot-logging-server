@@ -202,9 +202,9 @@ class TestRetry:
                 retry_on_exceptions=(self.HandledException,),
             )()
 
-            time_cost = time.time() - _start_time
-            logger.info(f"{time_cost=}")
-            assert time_cost <= expected_retry_session_timecost
+        time_cost = time.time() - _start_time
+        logger.info(f"{time_cost=}")
+        assert time_cost <= expected_retry_session_timecost
 
 
 @pytest.mark.parametrize(
