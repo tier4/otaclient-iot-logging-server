@@ -10,6 +10,11 @@ jobs:
         # currently we only need to ensure it is running on the following OS
         # with OS-shipped python interpreter.
         os: ["ubuntu-20.04", "ubuntu-22.04"]
+        include:
+          - os: ubuntu-22.04
+            python_version: 3.10
+          - os: ubuntu-20.04
+            python_version: 3.8
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout commit
@@ -21,6 +26,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
+          python-version: ${{ matrix.python_version }}
           cache: "pip"
 
       - name: Install package
@@ -33,11 +39,6 @@ jobs:
           coverage run -m pytest --junit-xml=test_result/pytest.xml
           coverage xml -o test_result/coverage.xml
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
       # export the coverage report to the comment!
       - name: Add coverage report to PR comment
         continue-on-error: true
@@ -45,6 +46,11 @@ jobs:
         with:
           pytest-xml-coverage-path: test_result/coverage.xml
           junitxml-path: test_result/pytest.xml
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   pytest_on_supported_python_vers:
     runs-on: ubuntu-22.04
