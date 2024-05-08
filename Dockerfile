@@ -10,7 +10,7 @@ FROM python:${PYTHON_VERSION}-${PYTHON_BASE_VER} as venv_builder
 
 ARG PYTHON_VENV
 
-COPY . /source_code
+COPY ./src ./pyproject.toml /source_code
 
 # ------ install build deps ------ #
 RUN set -eux; \
