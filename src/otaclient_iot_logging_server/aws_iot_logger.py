@@ -27,7 +27,7 @@ import awscrt.exceptions
 from typing_extensions import NoReturn
 
 from otaclient_iot_logging_server._common import LogEvent, LogMessage, LogsQueue
-from otaclient_iot_logging_server._utils import chain_query, retry
+from otaclient_iot_logging_server._utils import retry
 from otaclient_iot_logging_server.boto3_session import get_session
 from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.greengrass_config import (
@@ -63,11 +63,11 @@ class AWSIoTLogger:
         interval: int,
     ):
         _boto3_session = get_session(session_config)
-        self._client = _boto3_session.client(service_name="logs")  # type: ignore
+        self._client = client = _boto3_session.client(service_name="logs")
+        self._exc_types = client.exceptions
 
         self._session_config = session_config
         self._log_group_name = session_config.aws_cloudwatch_log_group
-        self._sequence_tokens: dict[str, str | None] = {}
         self._interval = interval
         self._queue: LogsQueue = queue
         # NOTE: add this limitation to ensure all of the log_streams in a merge
@@ -79,10 +79,11 @@ class AWSIoTLogger:
         # TODO: (20240214) should we let the edge side iot_logging_server
         #       create the log group?
         log_group_name, client = self._log_group_name, self._client
+        exc_types = self._exc_types
         try:
             client.create_log_group(logGroupName=log_group_name)
             logger.info(f"{log_group_name=} has been created")
-        except client.exceptions.ResourceAlreadyExistsException as e:
+        except exc_types.ResourceAlreadyExistsException as e:
             logger.debug(
                 f"{log_group_name=} already existed, skip creating: {e.response}"
             )
@@ -101,14 +102,14 @@ class AWSIoTLogger:
     @retry(max_retry=16, backoff_factor=2, backoff_max=32)
     def _create_log_stream(self, log_stream_name: str):
         log_group_name, client = self._log_group_name, self._client
+        exc_types = self._exc_types
         try:
             client.create_log_stream(
                 logGroupName=log_group_name,
                 logStreamName=log_stream_name,
             )
             logger.info(f"{log_stream_name=}@{log_group_name} has been created")
-            self._sequence_tokens = {}  # clear sequence token on new stream created
-        except client.exceptions.ResourceAlreadyExistsException as e:
+        except exc_types.ResourceAlreadyExistsException as e:
             logger.debug(
                 f"{log_stream_name=}@{log_group_name} already existed, skip creating: {e.response}"
             )
@@ -125,45 +126,27 @@ class AWSIoTLogger:
             raise
 
     @retry(backoff_factor=2)
-    def send_messages(self, log_stream_name: str, message_list: list[LogMessage]):
+    def put_log_events(self, log_stream_name: str, message_list: list[LogMessage]):
         """
         Ref:
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs/client/put_log_events.html
+
+        NOTE: sequence token is not needed and ignored by PutLogEvents action now. See the documentation for more details.
+        NOTE: The sequenceToken parameter is now ignored in PutLogEvents actions. PutLogEvents actions are now accepted
+            and never return InvalidSequenceTokenException or DataAlreadyAcceptedException even if the sequence token is not valid.
+            See the documentation for more details.
         """
         request = LogEvent(
             logGroupName=self._log_group_name,
             logStreamName=log_stream_name,
             logEvents=message_list,
         )
-        if _seq_token := self._sequence_tokens.get(log_stream_name):
-            request["sequenceToken"] = _seq_token
 
-        exceptions, client = self._client.exceptions, self._client
+        exc_types, client = self._exc_types, self._client
         try:
-            response = client.put_log_events(**request)
-            # NOTE: the sequenceToken is deprecated, put_log_events will always
-            #       be accepted with/without a sequenceToken.
-            #       see docs for more details.
-            if _sequence_token := response.get("nextSequenceToken"):
-                self._sequence_tokens[log_stream_name] = _sequence_token
+            client.put_log_events(**request)
             # logger.debug(f"successfully uploaded: {response}")
-        except exceptions.DataAlreadyAcceptedException:
-            pass
-        except exceptions.InvalidSequenceTokenException as e:
-            response = e.response
-            logger.debug(f"invalid sequence token: {response}")
-
-            _resp_err_msg: str = chain_query(e.response, "Error", "Message", default="")
-            # null as the next sequenceToken means don't include any
-            # sequenceToken at all, not that the token should be set to "null"
-            next_expected_token = _resp_err_msg.rsplit(" ", 1)[-1]
-            if next_expected_token == "null":
-                self._sequence_tokens.pop(log_stream_name, None)
-            else:
-                self._sequence_tokens[log_stream_name] = next_expected_token
-            raise  # let the retry do the logging upload again
-        except exceptions.ResourceNotFoundException as e:
-            response = e.response
+        except exc_types.ResourceNotFoundException as e:
             logger.debug(f"{log_stream_name=} not found: {e!r}")
             self._create_log_stream(log_stream_name)
             raise
@@ -200,7 +183,7 @@ class AWSIoTLogger:
 
             for log_stream_suffix, logs in message_dict.items():
                 with contextlib.suppress(Exception):
-                    self.send_messages(
+                    self.put_log_events(
                         get_log_stream_name(
                             self._session_config.thing_name, log_stream_suffix
                         ),
