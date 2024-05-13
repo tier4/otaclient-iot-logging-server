@@ -90,7 +90,7 @@ class TestAWSIoTLogger:
     class _TestFinished(Exception):
         pass
 
-    def _mocked_send_messages(self, _ecu_id: str, _logs: list[LogMessage]):
+    def _mocked_put_log_events(self, _ecu_id: str, _logs: list[LogMessage]):
         self._test_result[_ecu_id] = _logs
 
     @pytest.fixture
@@ -118,7 +118,7 @@ class TestAWSIoTLogger:
         # NOTE: another hack to let all entries being merged within one
         #       loop iteration.
         self._max_logs_per_merge = float("inf")
-        self.send_messages = self._mocked_send_messages
+        self.put_log_events = self._mocked_put_log_events
         self._interval = 6  # place holder
         self._session_config = mocker.MagicMock()  # place holder
         # for holding test results
@@ -135,10 +135,12 @@ class TestAWSIoTLogger:
         self._create_log_group = mocked__create_log_group = mocker.MagicMock(
             spec=AWSIoTLogger._create_log_group
         )
+
         # ------ execution ------ #
         with pytest.raises(self._TestFinished):
             func_to_test.__get__(self)()
         logger.info("execution finished")
+
         # ------ check result ------ #
         mocked__create_log_group.assert_called_once()
         # confirm the send_messages mock receives the expecting calls.
