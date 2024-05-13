@@ -48,7 +48,7 @@ class ConfigurableLoggingServerConfig(BaseSettings):
 
     MAX_LOGS_BACKLOG: int = 4096
     MAX_LOGS_PER_MERGE: int = 512
-    UPLOAD_INTERVAL: int = 60  # in seconds
+    UPLOAD_INTERVAL: int = 3  # in seconds
 
     ECU_INFO_YAML: str = "/boot/ota/ecu_info.yaml"
 
