@@ -43,6 +43,10 @@ class LoggingPostHandler:
             logger.info(
                 f"setup allowed_ecu_id from ecu_info.yaml: {stripped_ecu_info.ecu_id_set}"
             )
+        else:
+            logger.warning(
+                "no ecu_info.yaml presented, logging upload filtering is DISABLED"
+            )
 
     # route: POST /{ecu_id}
     async def logging_post_handler(self, request: Request):
