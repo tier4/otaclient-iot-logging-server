@@ -77,6 +77,8 @@ class _ThingArn(NamedTuple):
     @property
     def thing_name(self) -> str:
         return remove_prefix(self.resource_id, "thing/")
+
+
 #
 # ------ v1 configuration parse ------ #
 #
@@ -116,6 +118,8 @@ def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
         region=thing_arn.region,
         aws_credential_provider_endpoint=str(this_profile_info.credential_endpoint),
     )
+
+
 #
 # ------ v2 configuration parse ------ #
 #
@@ -183,6 +187,8 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
         aws_credential_provider_endpoint=cred_endpoint,
         pkcs11_config=pkcs11_cfg,
     )
+
+
 #
 # ------ main config parser ------ #
 #
