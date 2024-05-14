@@ -16,6 +16,11 @@ Currently only ECU id will be checked, IP checking is not performed as sub ECU o
 
 NOTE that if `ecu_info.yaml` file is not presented, the filtering will be DISABLED.
 
+## Auto restart on config files changed
+
+By default, the `EXIT_ON_CONFIG_FILE_CHANGED` is enabled.
+Together with systemd.service `Restart` policy configured, automatically restart iot-logger server on config files changed can be achieved.
+
 ## Usage
 
 ### Environmental variables
@@ -37,3 +42,4 @@ The behaviors of the iot_logging_server can be configured with the following env
 | MAX_LOGS_BACKLOG | `4096` | Max pending log entries. |
 | MAX_LOGS_PER_MERGE | `512` | Max log entries in a merge group. |
 | UPLOAD_INTERVAL | `3` | Interval of uploading log batches to cloud. **Note that if the logger is restarted before next upload occurs, the pending loggings will be dropped.** |
+| EXIT_ON_CONFIG_FILE_CHANGED | `true` | Whether to kill the server on config files changed. **Note that this feature is expected to be used together with systemd.service Restart.** |

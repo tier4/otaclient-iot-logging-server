@@ -28,6 +28,7 @@ import yaml
 from pydantic import computed_field
 
 from otaclient_iot_logging_server._utils import FixedConfig, chain_query, remove_prefix
+from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
 from otaclient_iot_logging_server.configs import profile_info, server_cfg
 
 logger = logging.getLogger(__name__)
@@ -76,8 +77,6 @@ class _ThingArn(NamedTuple):
     @property
     def thing_name(self) -> str:
         return remove_prefix(self.resource_id, "thing/")
-
-
 #
 # ------ v1 configuration parse ------ #
 #
@@ -117,8 +116,6 @@ def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
         region=thing_arn.region,
         aws_credential_provider_endpoint=str(this_profile_info.credential_endpoint),
     )
-
-
 #
 # ------ v2 configuration parse ------ #
 #
@@ -137,7 +134,6 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
     this_profile_info = profile_info.get_profile_info(
         get_profile_from_thing_name(thing_name)
     )
-
     # NOTE(20240207): use credential endpoint defined in the config.yml in prior,
     #                 only when this information is not available, we use the
     #                 <_AWS_CREDENTIAL_PROVIDER_ENDPOINT_MAPPING> to get endpoint.
@@ -153,7 +149,6 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
         cred_endpoint = _cred_endpoint
     else:
         cred_endpoint = this_profile_info.credential_endpoint
-
     # ------ parse pkcs11 config if any ------ #
     _raw_pkcs11_cfg: dict[str, str]
     pkcs11_cfg = None
@@ -188,13 +183,9 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
         aws_credential_provider_endpoint=cred_endpoint,
         pkcs11_config=pkcs11_cfg,
     )
-
-
 #
 # ------ main config parser ------ #
 #
-
-
 class PKCS11Config(FixedConfig):
     """
     See services.aws.greengrass.crypto.Pkcs11Provider section for more details.
@@ -259,10 +250,12 @@ def parse_config() -> IoTSessionConfig:
         if (_v2_cfg_f := Path(server_cfg.GREENGRASS_V2_CONFIG)).is_file():
             _v2_cfg = parse_v2_config(_v2_cfg_f.read_text())
             logger.debug(f"gg config v2 is in used: {_v2_cfg}")
+            monitored_config_files.add(server_cfg.GREENGRASS_V2_CONFIG)
             return _v2_cfg
 
         _v1_cfg = parse_v1_config(Path(server_cfg.GREENGRASS_V1_CONFIG).read_text())
         logger.debug(f"gg config v1 is in used: {_v1_cfg}")
+        monitored_config_files.add(server_cfg.GREENGRASS_V1_CONFIG)
         return _v1_cfg
     except Exception as e:
         _msg = f"failed to parse config: {e!r}"

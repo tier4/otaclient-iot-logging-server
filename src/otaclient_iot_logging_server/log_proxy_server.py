@@ -25,7 +25,7 @@ from aiohttp.web import Request
 
 from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server.configs import server_cfg
-from otaclient_iot_logging_server.ecu_info import parse_ecu_info
+from otaclient_iot_logging_server.ecu_info import ecu_info
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,10 @@ class LoggingPostHandler:
         self._queue = queue
         self._allowed_ecus = None
 
-        stripped_ecu_info = parse_ecu_info(server_cfg.ECU_INFO_YAML)
-        if stripped_ecu_info:
-            self._allowed_ecus = stripped_ecu_info.ecu_id_set
+        if ecu_info:
+            self._allowed_ecus = ecu_info.ecu_id_set
             logger.info(
-                f"setup allowed_ecu_id from ecu_info.yaml: {stripped_ecu_info.ecu_id_set}"
+                f"setup allowed_ecu_id from ecu_info.yaml: {ecu_info.ecu_id_set}"
             )
         else:
             logger.warning(

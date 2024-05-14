@@ -27,6 +27,9 @@ from typing import List, Optional
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, IPvAnyAddress
 
+from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
+from otaclient_iot_logging_server.configs import server_cfg
+
 logger = logging.getLogger(__name__)
 
 
@@ -65,3 +68,8 @@ def parse_ecu_info(ecu_info_file: Path | str) -> Optional[ECUInfo]:
         return ECUInfo.model_validate(loaded_ecu_info, strict=True)
     except Exception as e:
         logger.info(f"{ecu_info_file=} is invalid or missing: {e!r}")
+
+
+ecu_info = parse_ecu_info(server_cfg.ECU_INFO_YAML)
+if ecu_info:
+    monitored_config_files.add(server_cfg.ECU_INFO_YAML)
