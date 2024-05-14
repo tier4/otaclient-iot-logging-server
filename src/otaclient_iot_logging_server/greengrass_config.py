@@ -29,6 +29,7 @@ from pydantic import computed_field
 
 from otaclient_iot_logging_server._utils import FixedConfig, chain_query, remove_prefix
 from otaclient_iot_logging_server.configs import profile_info, server_cfg
+from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
 
 logger = logging.getLogger(__name__)
 
@@ -259,10 +260,12 @@ def parse_config() -> IoTSessionConfig:
         if (_v2_cfg_f := Path(server_cfg.GREENGRASS_V2_CONFIG)).is_file():
             _v2_cfg = parse_v2_config(_v2_cfg_f.read_text())
             logger.debug(f"gg config v2 is in used: {_v2_cfg}")
+            monitored_config_files.add(server_cfg.GREENGRASS_V2_CONFIG)
             return _v2_cfg
 
         _v1_cfg = parse_v1_config(Path(server_cfg.GREENGRASS_V1_CONFIG).read_text())
         logger.debug(f"gg config v1 is in used: {_v1_cfg}")
+        monitored_config_files.add(server_cfg.GREENGRASS_V1_CONFIG)
         return _v1_cfg
     except Exception as e:
         _msg = f"failed to parse config: {e!r}"

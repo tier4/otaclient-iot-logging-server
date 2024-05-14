@@ -24,6 +24,8 @@ from pydantic import BaseModel, BeforeValidator, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Annotated
 
+from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
+
 _LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
 
 
@@ -52,6 +54,9 @@ class ConfigurableLoggingServerConfig(BaseSettings):
 
     ECU_INFO_YAML: str = "/boot/ota/ecu_info.yaml"
 
+    EXIT_ON_CONFIG_FILE_CHANGED: bool = True
+    """Kill the server when any config files changed."""
+
 
 class _AWSProfile(BaseModel):
     model_config = SettingsConfigDict(frozen=True)
@@ -76,3 +81,4 @@ def load_profile_info(_cfg_fpath: str) -> AWSProfileInfo:
 
 server_cfg = ConfigurableLoggingServerConfig()
 profile_info = load_profile_info(server_cfg.AWS_PROFILE_INFO)
+monitored_config_files.add(server_cfg.AWS_PROFILE_INFO)
