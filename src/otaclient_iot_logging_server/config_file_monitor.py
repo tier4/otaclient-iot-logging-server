@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import threading
 import time
 from os import stat_result
 from typing import NamedTuple, NoReturn
@@ -52,7 +53,7 @@ class _MCTime(NamedTuple):
         return cls(int(stat.st_mtime), int(stat.st_ctime))
 
 
-def config_file_monitor() -> NoReturn:
+def _config_file_monitor() -> NoReturn:
     # initialize, record the original status
     logger.info(f"start to monitor the changes of {monitored_config_files}")
     while True:
@@ -68,3 +69,9 @@ def config_file_monitor() -> NoReturn:
                 sys.exit()
 
         time.sleep(_CHECK_INTERVAL)
+
+
+def config_file_monitor_thread() -> threading.Thread:
+    t = threading.Thread(target=_config_file_monitor, daemon=True)
+    t.start()
+    return t
