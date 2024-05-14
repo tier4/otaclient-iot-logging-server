@@ -32,6 +32,7 @@ from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.log_proxy_server as log_server_module
 from otaclient_iot_logging_server._common import LogsQueue
+from otaclient_iot_logging_server.ecu_info import parse_ecu_info
 from otaclient_iot_logging_server.log_proxy_server import LoggingPostHandler
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,8 @@ class _ServerConfig:
     LISTEN_ADDRESS: str = "127.0.0.1"
     LISTEN_PORT: int = 8083
     ECU_INFO_YAML: Path = TEST_DIR / "ecu_info.yaml"
+    # remember to disable config file monitor
+    EXIT_ON_CONFIG_FILE_CHANGED: bool = False
 
 
 _test_server_cfg = _ServerConfig()
@@ -83,7 +86,12 @@ class TestLogProxyServer:
     TOTAL_MSG_NUM = 4096
 
     @pytest.fixture(autouse=True)
-    async def launch_server(self, mocker: MockerFixture):
+    def mock_ecu_info(self, mocker: MockerFixture):
+        ecu_info = parse_ecu_info(TEST_DIR / "ecu_info.yaml")
+        mocker.patch(f"{MODULE}.ecu_info", ecu_info)
+
+    @pytest.fixture(autouse=True)
+    async def launch_server(self, mocker: MockerFixture, mock_ecu_info):
         """
         See https://docs.aiohttp.org/en/stable/web_advanced.html#custom-resource-implementation
             for more details.
