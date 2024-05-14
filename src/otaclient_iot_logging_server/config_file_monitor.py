@@ -24,7 +24,8 @@ to achieve automatically restart on configuration files changed.
 from __future__ import annotations
 
 import logging
-import sys
+import os
+import signal
 import threading
 import time
 from os import stat_result
@@ -66,7 +67,9 @@ def _config_file_monitor() -> NoReturn:
             f_mctime = _monitored_files_stat[entry]
             if f_mctime.file_changed(new_f_mctime):
                 logger.warning(f"detect change on config file {entry}, exit")
-                sys.exit()
+
+                # NOTE: sys.exit is not working in thread
+                os.kill(os.getpid(), signal.SIGINT)
 
         time.sleep(_CHECK_INTERVAL)
 
