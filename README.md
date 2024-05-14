@@ -16,7 +16,7 @@ Currently only ECU id will be checked, IP checking is not performed as sub ECU o
 
 NOTE that if `ecu_info.yaml` file is not presented, the filtering will be DISABLED.
 
-## Auto restart on config files changed.
+## Auto restart on config files changed
 
 By default, the `EXIT_ON_CONFIG_FILE_CHANGED` is enabled.
 Together with systemd.service `Restart` policy configured, automatically restart iot-logger server on config files changed can be achieved.

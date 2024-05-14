@@ -27,8 +27,8 @@ from typing import List, Optional
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, IPvAnyAddress
 
-from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
+from otaclient_iot_logging_server.configs import server_cfg
 
 logger = logging.getLogger(__name__)
 

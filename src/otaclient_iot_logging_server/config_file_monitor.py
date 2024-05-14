@@ -29,8 +29,8 @@ import signal
 import threading
 import time
 from os import stat_result
-from typing import NamedTuple, NoReturn
 from pathlib import Path
+from typing import NamedTuple, NoReturn
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,6 @@ def _config_file_monitor() -> NoReturn:
             f_mctime = _monitored_files_stat[entry]
             if f_mctime.file_changed(new_f_mctime):
                 logger.warning(f"detect change on config file {entry}, exit")
-
                 # NOTE: sys.exit is not working in thread
                 os.kill(os.getpid(), signal.SIGINT)
 

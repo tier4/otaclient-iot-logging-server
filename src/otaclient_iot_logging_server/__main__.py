@@ -21,15 +21,14 @@ from otaclient_iot_logging_server import __version__
 from otaclient_iot_logging_server._common import LogsQueue
 from otaclient_iot_logging_server._log_setting import config_logging
 from otaclient_iot_logging_server.aws_iot_logger import start_aws_iot_logger_thread
-from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.config_file_monitor import config_file_monitor_thread
+from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.log_proxy_server import launch_server
 
 
 def main() -> None:
     # server scope log entries pipe
     queue: LogsQueue = Queue(maxsize=server_cfg.MAX_LOGS_BACKLOG)
-
     # ------ configure local logging ------ #
     root_logger = config_logging(
         queue,
@@ -43,14 +42,11 @@ def main() -> None:
         f"launching iot_logging_server({__version__}) at http://{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
     )
     root_logger.info(f"iot_logging_server config: \n{server_cfg}")
-
     # ------ launch aws cloudwatch client ------ #
     start_aws_iot_logger_thread(queue)
-
     # ------ launch config file monitor ------ #
     if server_cfg.EXIT_ON_CONFIG_FILE_CHANGED:
         config_file_monitor_thread()
-
     # ------ start server ------ #
     launch_server(queue=queue)  # NoReturn
 
