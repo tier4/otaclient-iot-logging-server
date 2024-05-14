@@ -48,8 +48,9 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "SERVER_LOGGING_LOG_FORMAT": "[%(asctime)s][%(levelname)s]-%(name)s:%(funcName)s:%(lineno)d,%(message)s",
                 "MAX_LOGS_BACKLOG": 4096,
                 "MAX_LOGS_PER_MERGE": 512,
-                "UPLOAD_INTERVAL": 60,
+                "UPLOAD_INTERVAL": 3,
                 "ECU_INFO_YAML": "/boot/ota/ecu_info.yaml",
+                "EXIT_ON_CONFIG_FILE_CHANGED": True,
             },
         ),
         # test#1: frequently changed settings
@@ -73,6 +74,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "MAX_LOGS_PER_MERGE": 512,
                 "UPLOAD_INTERVAL": 30,
                 "ECU_INFO_YAML": "/boot/ota/ecu_info.yaml",
+                "EXIT_ON_CONFIG_FILE_CHANGED": True,
             },
         ),
         # test#2: change everything
@@ -91,6 +93,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "MAX_LOGS_PER_MERGE": "128",
                 "UPLOAD_INTERVAL": "10",
                 "ECU_INFO_YAML": "/some/where/ecu_info.yaml",
+                "EXIT_ON_CONFIG_FILE_CHANGED": "false",
             },
             {
                 "GREENGRASS_V1_CONFIG": "ggv1_cfg.json",
@@ -106,6 +109,7 @@ AWS_PROFILE_INFO_FPATH = TEST_DATA_DPATH / "aws_profile_info.yaml"
                 "MAX_LOGS_PER_MERGE": 128,
                 "UPLOAD_INTERVAL": 10,
                 "ECU_INFO_YAML": "/some/where/ecu_info.yaml",
+                "EXIT_ON_CONFIG_FILE_CHANGED": False,
             },
         ),
     ],
