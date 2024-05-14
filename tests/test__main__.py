@@ -42,7 +42,7 @@ class _ServerCfg:
     MAX_LOGS_PER_MERGE: int = 123
     MAX_LOGS_BACKLOG: int = 1234
     UPLOAD_INTERVAL: int = 12
-    EXIT_ON_CONFIG_FILE_CHANGED: bool = True
+    EXIT_ON_CONFIG_FILE_CHANGED: bool = False
 
 
 @pytest.mark.parametrize("_in_server_cfg, _version", [(_ServerCfg(), "test_version")])
