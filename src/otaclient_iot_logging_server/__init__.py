@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# flake8: noqa
 
 
-from _version import version as __version__  # type: ignore
+from otaclient_iot_logging_server._version import __version__
 
 package_name = __name__.split(".")[0]
+version = __version__

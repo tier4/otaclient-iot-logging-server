@@ -1,0 +1,40 @@
+name: build wheel for release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write # upload artifacts requires this permission
+
+jobs:
+  build_wheel:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup python environment
+        uses: actions/setup-python@v5
+        with:
+          # use the minimum py ver we support to
+          # generate the wheel.
+          python-version: "3.8"
+
+      - name: Build wheel and calculate checksum
+        run: |
+          python3 -m pip install -q -U pip
+          pip install -q -U hatch
+          hatch build -t wheel
+          for WHL in dist/*.whl; \
+            do \
+              sha256sum ${WHL} | sed -E "s@(\w+)\s+.*@sha256:\1@" > \
+                ${WHL}.checksum; \
+            done
+
+      - name: Upload built wheel as release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.whl
+            dist/*.checksum

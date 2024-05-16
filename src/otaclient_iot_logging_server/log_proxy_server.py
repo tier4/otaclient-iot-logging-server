@@ -23,38 +23,45 @@ from queue import Full, Queue
 from aiohttp import web
 from aiohttp.web import Request
 
-from otaclient_iot_logging_server._common import LogMessage
-from otaclient_iot_logging_server.aws_iot_logger import (
-    AWSIoTLogger,
-    start_sending_msg_thread,
-)
+from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server.configs import server_cfg
-from otaclient_iot_logging_server.greengrass_config import IoTSessionConfig
+from otaclient_iot_logging_server.ecu_info import ecu_info
 
 logger = logging.getLogger(__name__)
 
 
 class LoggingPostHandler:
-    """A simple aiohttp server handler that receives logs from otaclient.
+    """A simple aiohttp server handler that receives logs from otaclient."""
 
-    This server listen POST requests on /<ecu_id>, and then package the
-        incoming posted <data> into LogMessage instance as follow:
-            log_msg = LogMessage(timestamp=<unix_ts_millisec>, message=<data>)
-        and then push the <log_msg> instance into queue for aws_iot_logger
-        to process and upload to AWS cloudwatch.
-    """
-
-    def __init__(self, queue: Queue[tuple[str, LogMessage]]) -> None:
+    def __init__(self, queue: LogsQueue) -> None:
         self._queue = queue
+        self._allowed_ecus = None
+
+        if ecu_info:
+            self._allowed_ecus = ecu_info.ecu_id_set
+            logger.info(
+                f"setup allowed_ecu_id from ecu_info.yaml: {ecu_info.ecu_id_set}"
+            )
+        else:
+            logger.warning(
+                "no ecu_info.yaml presented, logging upload filtering is DISABLED"
+            )
 
     # route: POST /{ecu_id}
-    async def _logging_post_handler(self, request: Request):
+    async def logging_post_handler(self, request: Request):
         """
         NOTE: use <ecu_id> as log_stream_suffix, each ECU has its own
               logging stream for uploading.
         """
         _ecu_id = request.match_info["ecu_id"]
         _raw_logging = await request.text()
+        _allowed_ecus = self._allowed_ecus
+
+        # don't allow empty request or unknowned ECUs
+        # if ECU id is unknown(not listed in ecu_info.yaml), drop this log.
+        if not _raw_logging or (_allowed_ecus and _ecu_id not in _allowed_ecus):
+            return web.Response(status=HTTPStatus.BAD_REQUEST)
+
         _logging_msg = LogMessage(
             timestamp=int(time.time()) * 1000,  # milliseconds
             message=_raw_logging,
@@ -70,25 +77,10 @@ class LoggingPostHandler:
         return web.Response(status=HTTPStatus.OK)
 
 
-def launch_server(
-    session_config: IoTSessionConfig,
-    max_logs_backlog: int,
-    max_logs_per_merge: int,
-    interval: int,
-):
-    queue = Queue(maxsize=max_logs_backlog)
-    start_sending_msg_thread(
-        AWSIoTLogger(
-            session_config=session_config,
-            queue=queue,
-            max_logs_per_merge=max_logs_per_merge,
-            interval=interval,
-        )
-    )
-
+def launch_server(queue: Queue[tuple[str, LogMessage]]) -> None:
     handler = LoggingPostHandler(queue=queue)
     app = web.Application()
-    app.add_routes([web.post(r"/{ecu_id}", handler._logging_post_handler)])
+    app.add_routes([web.post(r"/{ecu_id}", handler.logging_post_handler)])
 
-    # actual launch the server and serving
-    web.run_app(app, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)
+    # typing: run_app is a NoReturn method, unless received signal
+    web.run_app(app, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)  # type: ignore

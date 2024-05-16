@@ -17,10 +17,12 @@ from __future__ import annotations
 
 import time
 from functools import partial, wraps
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar, overload
 
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import ParamSpec, TypeAlias
+
+from otaclient_iot_logging_server._common import PKCS11URI
 
 RT = TypeVar("RT")
 P = ParamSpec("P")
@@ -34,7 +36,7 @@ class FixedConfig(BaseModel):
 _MISSING = object()
 
 
-def chain_query(_obj: NestedDict, *_paths: str, default=_MISSING) -> Any:
+def chain_query(_obj: NestedDict, *_paths: str, default: object = _MISSING) -> Any:
     """Chain access a nested dict <_obj> according to search <_paths>.
 
     For example:
@@ -69,6 +71,28 @@ def chain_query(_obj: NestedDict, *_paths: str, default=_MISSING) -> Any:
         if default is not _MISSING:
             return default
         raise ValueError(f"chain query with {_paths=} failed: {e!r}") from e
+
+
+@overload
+def retry(
+    func: None = None,
+    /,
+    backoff_factor: float = 0.1,
+    backoff_max: int = 6,
+    max_retry: int = 6,
+    retry_on_exceptions: tuple[type[Exception], ...] = (Exception,),
+) -> partial[Any]: ...
+
+
+@overload
+def retry(
+    func: Callable[P, RT],
+    /,
+    backoff_factor: float = ...,
+    backoff_max: int = ...,
+    max_retry: int = ...,
+    retry_on_exceptions: tuple[type[Exception], ...] = ...,
+) -> Callable[P, RT]: ...
 
 
 def retry(
@@ -111,3 +135,12 @@ def remove_prefix(_str: str, _prefix: str) -> str:
     if _str.startswith(_prefix):
         return _str.replace(_prefix, "", 1)
     return _str
+
+
+def parse_pkcs11_uri(_pkcs11_uri: str) -> PKCS11URI:
+    _, pkcs11_opts_str = _pkcs11_uri.split(":", maxsplit=1)
+    pkcs11_opts_dict: dict[str, Any] = {}
+    for opt in pkcs11_opts_str.split(";"):
+        k, v = opt.split("=", maxsplit=1)
+        pkcs11_opts_dict[k] = v
+    return PKCS11URI(**pkcs11_opts_dict)

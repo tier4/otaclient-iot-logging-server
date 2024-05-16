@@ -21,21 +21,22 @@ import logging
 import re
 from functools import partial
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, NamedTuple, Optional
 from urllib.parse import urljoin
 
 import yaml
 from pydantic import computed_field
 
-from otaclient_iot_logging_server._utils import (
-    FixedConfig,
-    NestedDict,
-    chain_query,
-    remove_prefix,
-)
+from otaclient_iot_logging_server._utils import FixedConfig, chain_query, remove_prefix
+from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
 from otaclient_iot_logging_server.configs import profile_info, server_cfg
 
 logger = logging.getLogger(__name__)
+
+
+THINGNAME_PA = re.compile(r"^(thing[/:])?(?P<profile>[\w-]+)-edge-(?P<id>[\w-]+)-.*$")
+THINGNAME_MAXLENGH = 128 + len("thing/")
+"""ThingName's max length is 128. See https://docs.aws.amazon.com/iot/latest/apireference/API_ThingDocument.html."""
 
 
 def get_profile_from_thing_name(_in: str) -> str:
@@ -43,9 +44,7 @@ def get_profile_from_thing_name(_in: str) -> str:
 
     Schema: thing/<profile>-edge-<id>-Core
     """
-    THINGNAME_PA = re.compile(
-        r"^(thing[/:])?(?P<profile>[\w-]+)-edge-(?P<id>[\w-]+)-.*$"
-    )
+    assert len(_in) <= THINGNAME_MAXLENGH, f"invalid thing_name: {_in}"
 
     _ma = THINGNAME_PA.match(_in)
     assert _ma, f"invalid resource id: {_in}"
@@ -94,7 +93,7 @@ def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
 
     NOTE(20240207): not consider TPM for ggv1.
     """
-    loaded_cfg = json.loads(_raw_cfg)
+    loaded_cfg: dict[str, Any] = json.loads(_raw_cfg)
     assert isinstance(loaded_cfg, dict), f"invalid cfg: {_raw_cfg}"
 
     _raw_thing_arn = chain_query(loaded_cfg, "coreThing", "thingArn")
@@ -124,57 +123,6 @@ def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
 #
 # ------ v2 configuration parse ------ #
 #
-def _v2_complete_uri(_cfg: NestedDict, _uri: str) -> str:
-    """Fix up the URI if the URI is pkcs11 URI.
-
-    In gg v2 config, the pin-value(userPin) are specified in
-        aws.greengrass.crypto.Pkcs11Provider section, so these
-        option is striped from priv_key/cert URI.
-
-    As we will feed the URI to external openssl pkcs11 engine when using
-        pycurl, we need to add the userPin information back to URI for openssl.
-
-    Example pkcs11 URI schema:
-    pkcs11:token=<token_label>;object=<key_label>;pin-value=<userpin>;type=<cert/private)>
-
-    Args:
-        _cfg: the dumped config file dict.
-        _uri: the input uri for completing.
-
-    Returns:
-        Original input <_uri> if <_uri> is not a pkcs11 URI, else a completed
-            pkcs11 URI with pin-value inserted.
-
-    Raises:
-        ValueError on failing complete a pkcs11 URI.
-    """
-    if not _uri.startswith("pkcs11:"):
-        return _uri
-
-    scheme, pkcs11_opts_str = _uri.split(":", maxsplit=1)
-    pkcs11_opts_dict = {}
-    for opt in pkcs11_opts_str.split(";"):
-        k, v = opt.split("=", maxsplit=1)
-        pkcs11_opts_dict[k] = v
-
-    try:
-        user_pin = chain_query(
-            _cfg,
-            "services",
-            "aws.greengrass.crypto.Pkcs11Provider",
-            "configuration",
-            "userPin",
-        )
-        pkcs11_opts_dict["pin-value"] = user_pin
-    except ValueError as e:
-        raise ValueError(
-            f"failed to complete pkcs11 URI: {e!r}\nconfig={_cfg}uri=\n{_uri} "
-        )
-
-    pkcs11_opts_str = (f"{k}={v}" for k, v in pkcs11_opts_dict.items())
-    return f"{scheme}:{';'.join(pkcs11_opts_str)}"
-
-
 def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
     """Parse Greengrass V2 config yaml and take what we need.
 
@@ -183,7 +131,7 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
         https://tier4.atlassian.net/wiki/spaces/HIICS/pages/2544042770/TPM+Ubuntu+22.04+Greengrass+v2.
         https://datatracker.ietf.org/doc/html/rfc7512.
     """
-    loaded_cfg = yaml.safe_load(_raw_cfg)
+    loaded_cfg: dict[str, Any] = yaml.safe_load(_raw_cfg)
     assert isinstance(loaded_cfg, dict), f"invalid cfg: {_raw_cfg}"
 
     thing_name = chain_query(loaded_cfg, "system", "thingName")
@@ -193,29 +141,40 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
     # NOTE(20240207): use credential endpoint defined in the config.yml in prior,
     #                 only when this information is not available, we use the
     #                 <_AWS_CREDENTIAL_PROVIDER_ENDPOINT_MAPPING> to get endpoint.
-    _cred_endpoint: str = chain_query(
+    _cred_endpoint: str
+    if _cred_endpoint := chain_query(
         loaded_cfg,
         "services",
         "aws.greengrass.Nucleus",
         "configuration",
         "iotCredEndpoint",
         default=None,
-    )
-    if _cred_endpoint is None:
-        cred_endpoint = str(this_profile_info.credential_endpoint)
+    ):
+        cred_endpoint = _cred_endpoint
     else:
-        cred_endpoint = f"https://{_cred_endpoint.rstrip('/')}/"
+        cred_endpoint = this_profile_info.credential_endpoint
+    # ------ parse pkcs11 config if any ------ #
+    _raw_pkcs11_cfg: dict[str, str]
+    pkcs11_cfg = None
+    if _raw_pkcs11_cfg := chain_query(
+        loaded_cfg,
+        "services",
+        "aws.greengrass.crypto.Pkcs11Provider",
+        "configuration",
+        default=None,
+    ):
+        pkcs11_cfg = PKCS11Config(
+            pkcs11_lib=_raw_pkcs11_cfg["library"],
+            user_pin=_raw_pkcs11_cfg["userPin"],
+            slot_id=str(_raw_pkcs11_cfg["slot"]),
+        )
 
     return IoTSessionConfig(
         # NOTE: v2 config doesn't include account_id info
         account_id=this_profile_info.account_id,
         ca_path=chain_query(loaded_cfg, "system", "rootCaPath"),
-        private_key_path=_v2_complete_uri(
-            loaded_cfg, chain_query(loaded_cfg, "system", "privateKeyPath")
-        ),
-        certificate_path=_v2_complete_uri(
-            loaded_cfg, chain_query(loaded_cfg, "system", "certificateFilePath")
-        ),
+        private_key_path=chain_query(loaded_cfg, "system", "privateKeyPath"),
+        certificate_path=chain_query(loaded_cfg, "system", "certificateFilePath"),
         thing_name=thing_name,
         profile=this_profile_info.profile_name,
         region=chain_query(
@@ -226,12 +185,23 @@ def parse_v2_config(_raw_cfg: str) -> IoTSessionConfig:
             "awsRegion",
         ),
         aws_credential_provider_endpoint=cred_endpoint,
+        pkcs11_config=pkcs11_cfg,
     )
 
 
 #
 # ------ main config parser ------ #
 #
+class PKCS11Config(FixedConfig):
+    """
+    See services.aws.greengrass.crypto.Pkcs11Provider section for more details.
+    """
+
+    pkcs11_lib: str
+    slot_id: str
+    user_pin: str
+
+
 class IoTSessionConfig(FixedConfig):
     """Configurations we need picked from parsed Greengrass V1/V2 configration file.
 
@@ -249,6 +219,7 @@ class IoTSessionConfig(FixedConfig):
     region: str
 
     aws_credential_provider_endpoint: str
+    pkcs11_config: Optional[PKCS11Config] = None
 
     @computed_field
     @property
@@ -271,7 +242,7 @@ class IoTSessionConfig(FixedConfig):
     def aws_credential_refresh_url(self) -> str:
         """The endpoint to refresh token from."""
         return urljoin(
-            self.aws_credential_provider_endpoint,
+            f"https://{self.aws_credential_provider_endpoint.rstrip('/')}/",
             f"role-aliases/{self.aws_role_alias}/credentials",
         )
 
@@ -285,10 +256,12 @@ def parse_config() -> IoTSessionConfig:
         if (_v2_cfg_f := Path(server_cfg.GREENGRASS_V2_CONFIG)).is_file():
             _v2_cfg = parse_v2_config(_v2_cfg_f.read_text())
             logger.debug(f"gg config v2 is in used: {_v2_cfg}")
+            monitored_config_files.add(server_cfg.GREENGRASS_V2_CONFIG)
             return _v2_cfg
 
         _v1_cfg = parse_v1_config(Path(server_cfg.GREENGRASS_V1_CONFIG).read_text())
         logger.debug(f"gg config v1 is in used: {_v1_cfg}")
+        monitored_config_files.add(server_cfg.GREENGRASS_V1_CONFIG)
         return _v1_cfg
     except Exception as e:
         _msg = f"failed to parse config: {e!r}"

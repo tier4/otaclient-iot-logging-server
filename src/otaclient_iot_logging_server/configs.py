@@ -16,48 +16,59 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
+from typing import List, Literal
 
 import yaml
-from pydantic import AnyHttpUrl, BaseModel
+from pydantic import BaseModel, BeforeValidator, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing_extensions import Annotated
+
+from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
+
+_LoggingLevelName = Literal["INFO", "DEBUG", "CRITICAL", "ERROR", "WARNING"]
 
 
 class ConfigurableLoggingServerConfig(BaseSettings):
     model_config = SettingsConfigDict(frozen=True, validate_default=True)
-
     # the default location of greengrass configuration files.
     # NOTE(20240209): allow user to change this values with env vars,
     GREENGRASS_V1_CONFIG: str = "/greengrass/config/config.json"
     GREENGRASS_V2_CONFIG: str = "/greengrass/v2/init_config/config.yaml"
 
-    AWS_PROFILE_INFO: str = "/opt/ota/client/aws_profile_info.yaml"
+    AWS_PROFILE_INFO: str = "/opt/ota/iot-logger/aws_profile_info.yaml"
     """The path to aws_profile_info.yaml."""
 
     LISTEN_ADDRESS: str = "127.0.0.1"
     LISTEN_PORT: int = 8083
-    SERVER_LOGGING_LEVEL: int = logging.INFO
+    UPLOAD_LOGGING_SERVER_LOGS: bool = False
+    SERVER_LOGSTREAM_SUFFIX: str = "iot_logging_server"
+    SERVER_LOGGING_LEVEL: _LoggingLevelName = "INFO"
     SERVER_LOGGING_LOG_FORMAT: str = (
         "[%(asctime)s][%(levelname)s]-%(name)s:%(funcName)s:%(lineno)d,%(message)s"
     )
 
     MAX_LOGS_BACKLOG: int = 4096
     MAX_LOGS_PER_MERGE: int = 512
-    UPLOAD_INTERVAL: int = 60  # in seconds
+    UPLOAD_INTERVAL: int = 3  # in seconds
+
+    ECU_INFO_YAML: str = "/boot/ota/ecu_info.yaml"
+
+    EXIT_ON_CONFIG_FILE_CHANGED: bool = True
+    """Kill the server when any config files changed."""
 
 
-class AWSProfileInfo(BaseModel):
-    class Profile(BaseModel):
-        model_config = SettingsConfigDict(frozen=True)
-        profile_name: str
-        account_id: str
-        credential_endpoint: AnyHttpUrl
+class _AWSProfile(BaseModel):
+    model_config = SettingsConfigDict(frozen=True)
+    profile_name: str
+    account_id: Annotated[str, BeforeValidator(str)] = Field(pattern=r"^\d{12}$")
+    credential_endpoint: str
 
-    profiles: list[Profile]
 
-    def get_profile_info(self, profile_name: str) -> Profile:
-        for profile in self.profiles:
+class AWSProfileInfo(RootModel[List[_AWSProfile]]):
+
+    def get_profile_info(self, profile_name: str) -> _AWSProfile:
+        for profile in self.root:
             if profile.profile_name == profile_name:
                 return profile
         raise KeyError(f"failed to get profile info for {profile_name=}")
@@ -70,3 +81,4 @@ def load_profile_info(_cfg_fpath: str) -> AWSProfileInfo:
 
 server_cfg = ConfigurableLoggingServerConfig()
 profile_info = load_profile_info(server_cfg.AWS_PROFILE_INFO)
+monitored_config_files.add(server_cfg.AWS_PROFILE_INFO)

@@ -13,27 +13,8 @@
 # limitations under the License.
 
 
-from __future__ import annotations
+from pathlib import Path
 
-from typing import TypedDict
+TEST_PACKAGE = Path(__file__).parent
 
-from typing_extensions import NotRequired
-
-
-class LogMessage(TypedDict):
-    timestamp: int  # in milliseconds
-    message: str
-
-
-class LogEvent(TypedDict):
-    logGroupName: str
-    logStreamName: str
-    logEvents: list[LogMessage]
-    sequenceToken: NotRequired[str]
-
-
-class Credentials(TypedDict):
-    access_key: str
-    secret_key: str
-    token: str
-    expiry_time: str
+TEST_DATA_DPATH = TEST_PACKAGE / "data"
