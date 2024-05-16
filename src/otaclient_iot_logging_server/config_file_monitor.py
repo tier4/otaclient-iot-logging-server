@@ -59,7 +59,13 @@ def _config_file_monitor() -> NoReturn:
     logger.info(f"start to monitor the changes of {monitored_config_files}")
     while True:
         for entry in monitored_config_files:
-            new_f_mctime = _MCTime.from_stat(Path(entry).stat())
+            try:
+                f_stat = Path(entry).stat()
+            except Exception as e:
+                logger.debug(f"cannot query stat from {entry}, skip: {e!r}")
+                continue
+
+            new_f_mctime = _MCTime.from_stat(f_stat)
             if entry not in _monitored_files_stat:
                 _monitored_files_stat[entry] = new_f_mctime
                 continue
