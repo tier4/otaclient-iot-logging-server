@@ -26,31 +26,42 @@ READY_MSG = "READY=1"
 SD_NOTIFY_SOCKET_ENV = "NOTIFY_SOCKET"
 
 
-def get_notify_socket() -> str | None:
-    return os.getenv(SD_NOTIFY_SOCKET_ENV)
-
-
 def sd_notify_enabled() -> bool:
     return bool(os.getenv(SD_NOTIFY_SOCKET_ENV))
+
+
+def get_notify_socket() -> str | None:
+    """Get the notify socket provided by systemd if set.
+
+    If the provided socket_path is an abstract socket which starts
+        with a "@" char, regulate the socket_path by replacing the
+        "@" char with NULL char and then return the regulated one.
+    """
+    socket_path = os.getenv(SD_NOTIFY_SOCKET_ENV)
+    if not socket_path:
+        return
+
+    # systemd provide abstract socket to us
+    if socket_path.startswith("@"):
+        socket_path = "\0" + socket_path[1:]
+    return socket_path
 
 
 def sd_notify(msg: str) -> bool | None:
     if not (notify_socket := get_notify_socket()):
         return
 
-    socket_link = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    try:
-        socket_link.connect(notify_socket)
-    except Exception as e:
-        logger.warning(f"failed to connect to {notify_socket=}: {e!r}")
-        return False
+    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as socket_conn:
+        try:
+            socket_conn.connect(notify_socket)
+        except Exception as e:
+            logger.warning(f"failed to connect to {notify_socket=}: {e!r}")
+            return False
 
-    try:
-        socket_link.sendall(msg.encode())
-        logger.info("sent ready message to systemd")
-        return True
-    except Exception as e:
-        logger.warning(f"failed to send ready message to notify socket: {e!r}")
-        return False
-    finally:
-        socket_link.close()
+        try:
+            socket_conn.sendall(msg.encode())
+            logger.info(f"sent ready message to {notify_socket=}")
+            return True
+        except Exception as e:
+            logger.warning(f"failed to send ready message to {notify_socket=}: {e!r}")
+            return False
