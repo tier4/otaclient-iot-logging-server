@@ -30,6 +30,10 @@ def get_notify_socket() -> str | None:
     return os.getenv(SD_NOTIFY_SOCKET_ENV)
 
 
+def sd_notify_enabled() -> bool:
+    return bool(os.getenv(SD_NOTIFY_SOCKET_ENV))
+
+
 async def sd_notify(msg: str) -> bool | None:
     if not (notify_socket := get_notify_socket()):
         return
