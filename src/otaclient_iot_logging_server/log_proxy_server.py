@@ -25,13 +25,13 @@ from aiohttp import web
 from aiohttp.web import Request
 
 from otaclient_iot_logging_server._common import LogMessage, LogsQueue
+from otaclient_iot_logging_server._sd_notify import (
+    READY_MSG,
+    sd_notify,
+    sd_notify_enabled,
+)
 from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.ecu_info import ecu_info
-from otaclient_iot_logging_server._sd_notify import (
-    sd_notify_enabled,
-    sd_notify,
-    READY_MSG,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,6 @@ class LoggingPostHandler:
         _ecu_id = request.match_info["ecu_id"]
         _raw_logging = await request.text()
         _allowed_ecus = self._allowed_ecus
-
         # don't allow empty request or unknowned ECUs
         # if ECU id is unknown(not listed in ecu_info.yaml), drop this log.
         if not _raw_logging or (_allowed_ecus and _ecu_id not in _allowed_ecus):
@@ -73,7 +72,6 @@ class LoggingPostHandler:
             message=_raw_logging,
         )
         # logger.debug(f"receive log from {_ecu_id}: {_logging_msg}")
-
         try:
             self._queue.put_nowait((_ecu_id, _logging_msg))
         except Full:
@@ -94,13 +92,16 @@ def launch_server(queue: Queue[tuple[str, LogMessage]]) -> None:
     loop = asyncio.new_event_loop()
 
     if sd_notify_enabled():
+        logger.info(
+            "otaclient-logger service is configured to send ready msg to systemd, "
+            f"wait for {WAIT_BEFORE_SEND_READY_MSG} seconds for the server starting up ..."
+        )
 
-        async def _sd_notify():
-            await asyncio.sleep(WAIT_BEFORE_SEND_READY_MSG)
-            await sd_notify(READY_MSG)
-
-        loop.create_task(_sd_notify())
-
+        loop.call_later(
+            WAIT_BEFORE_SEND_READY_MSG,
+            sd_notify,
+            READY_MSG,
+        )
     # typing: run_app is a NoReturn method, unless received signal
     web.run_app(
         app,

@@ -30,10 +30,13 @@ def get_notify_socket() -> str | None:
     return os.getenv(SD_NOTIFY_SOCKET_ENV)
 
 
-def send_msg() -> bool | None:
+def sd_notify_enabled() -> bool:
+    return bool(os.getenv(SD_NOTIFY_SOCKET_ENV))
+
+
+def sd_notify(msg: str) -> bool | None:
     if not (notify_socket := get_notify_socket()):
         return
-    logger.info("otaclient-logger service is configured to send ready msg to systemd")
 
     socket_link = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     try:
@@ -43,7 +46,7 @@ def send_msg() -> bool | None:
         return False
 
     try:
-        socket_link.sendall(READY_MSG.encode())
+        socket_link.sendall(msg.encode())
         logger.info("sent ready message to systemd")
         return True
     except Exception as e:
