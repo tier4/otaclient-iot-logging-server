@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from http import HTTPStatus
@@ -26,6 +27,11 @@ from aiohttp.web import Request
 from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.ecu_info import ecu_info
+from otaclient_iot_logging_server._sd_notify import (
+    sd_notify_enabled,
+    sd_notify,
+    READY_MSG,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +83,28 @@ class LoggingPostHandler:
         return web.Response(status=HTTPStatus.OK)
 
 
+WAIT_BEFORE_SEND_READY_MSG = 2  # seconds
+
+
 def launch_server(queue: Queue[tuple[str, LogMessage]]) -> None:
     handler = LoggingPostHandler(queue=queue)
     app = web.Application()
     app.add_routes([web.post(r"/{ecu_id}", handler.logging_post_handler)])
 
+    loop = asyncio.new_event_loop()
+
+    if sd_notify_enabled():
+
+        async def _sd_notify():
+            await asyncio.sleep(WAIT_BEFORE_SEND_READY_MSG)
+            await sd_notify(READY_MSG)
+
+        loop.create_task(_sd_notify())
+
     # typing: run_app is a NoReturn method, unless received signal
-    web.run_app(app, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)  # type: ignore
+    web.run_app(
+        app,
+        host=server_cfg.LISTEN_ADDRESS,
+        port=server_cfg.LISTEN_PORT,
+        loop=loop,
+    )  # type: ignore
