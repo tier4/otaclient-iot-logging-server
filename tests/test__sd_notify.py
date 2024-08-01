@@ -64,6 +64,20 @@ def test_get_notify_socket(input, expected, monkeypatch):
     assert _sd_notify.get_notify_socket() == expected
 
 
+@pytest.mark.parametrize(
+    "input, expected",
+    (
+        ("/a/normal/socket/path", True),
+        ("@a/abstract/unix/socket", True),
+        (None, False),
+    ),
+)
+def test_sd_notify_enabled(input, expected, monkeypatch):
+    if input:
+        monkeypatch.setenv(_sd_notify.SD_NOTIFY_SOCKET_ENV, input)
+    assert _sd_notify.sd_notify_enabled() == expected
+
+
 def test_sd_notify(socket_conn_mock, socket_object_mock, monkeypatch):
     NOTIFY_SOCKET = "any_non_empty_value"
     monkeypatch.setenv(_sd_notify.SD_NOTIFY_SOCKET_ENV, NOTIFY_SOCKET)
