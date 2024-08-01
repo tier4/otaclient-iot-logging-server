@@ -30,7 +30,7 @@ def get_notify_socket() -> str | None:
     return os.getenv(SD_NOTIFY_SOCKET_ENV)
 
 
-async def send_msg() -> bool | None:
+async def sd_notify(msg: str) -> bool | None:
     if not (notify_socket := get_notify_socket()):
         return
     logger.info("otaclient-logger service is configured to send ready msg to systemd")
@@ -42,7 +42,7 @@ async def send_msg() -> bool | None:
         return False
 
     try:
-        writer.write(READY_MSG.encode())
+        writer.write(msg.encode())
         await writer.drain()
         logger.info("sent ready message to systemd")
         return True
