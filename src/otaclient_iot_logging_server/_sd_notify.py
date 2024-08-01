@@ -16,9 +16,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
-import socket
 
 logger = logging.getLogger(__name__)
 
@@ -30,22 +30,25 @@ def get_notify_socket() -> str | None:
     return os.getenv(SD_NOTIFY_SOCKET_ENV)
 
 
-def send_msg() -> bool | None:
+async def send_msg() -> bool | None:
     if not (notify_socket := get_notify_socket()):
         return
     logger.info("otaclient-logger service is configured to send ready msg to systemd")
 
-    socket_link = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     try:
-        socket_link.connect(notify_socket)
+        _, writer = await asyncio.open_unix_connection(notify_socket)
     except Exception as e:
         logger.warning(f"failed to connect to {notify_socket=}: {e!r}")
         return False
 
     try:
-        socket_link.sendall(READY_MSG.encode())
+        writer.write(READY_MSG.encode())
+        await writer.drain()
         logger.info("sent ready message to systemd")
         return True
     except Exception as e:
         logger.warning(f"failed to send ready message to notify socket: {e!r}")
         return False
+    finally:
+        writer.close()
+        await writer.wait_closed()
