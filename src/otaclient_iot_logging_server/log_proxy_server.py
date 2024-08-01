@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from http import HTTPStatus
@@ -24,6 +25,11 @@ from aiohttp import web
 from aiohttp.web import Request
 
 from otaclient_iot_logging_server._common import LogMessage, LogsQueue
+from otaclient_iot_logging_server._sd_notify import (
+    READY_MSG,
+    sd_notify,
+    sd_notify_enabled,
+)
 from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.ecu_info import ecu_info
 
@@ -56,7 +62,6 @@ class LoggingPostHandler:
         _ecu_id = request.match_info["ecu_id"]
         _raw_logging = await request.text()
         _allowed_ecus = self._allowed_ecus
-
         # don't allow empty request or unknowned ECUs
         # if ECU id is unknown(not listed in ecu_info.yaml), drop this log.
         if not _raw_logging or (_allowed_ecus and _ecu_id not in _allowed_ecus):
@@ -67,7 +72,6 @@ class LoggingPostHandler:
             message=_raw_logging,
         )
         # logger.debug(f"receive log from {_ecu_id}: {_logging_msg}")
-
         try:
             self._queue.put_nowait((_ecu_id, _logging_msg))
         except Full:
@@ -77,10 +81,31 @@ class LoggingPostHandler:
         return web.Response(status=HTTPStatus.OK)
 
 
+WAIT_BEFORE_SEND_READY_MSG = 2  # seconds
+
+
 def launch_server(queue: Queue[tuple[str, LogMessage]]) -> None:
     handler = LoggingPostHandler(queue=queue)
     app = web.Application()
     app.add_routes([web.post(r"/{ecu_id}", handler.logging_post_handler)])
 
+    loop = asyncio.new_event_loop()
+
+    if sd_notify_enabled():
+        logger.info(
+            "otaclient-logger service is configured to send ready msg to systemd, "
+            f"wait for {WAIT_BEFORE_SEND_READY_MSG} seconds for the server starting up ..."
+        )
+
+        loop.call_later(
+            WAIT_BEFORE_SEND_READY_MSG,
+            sd_notify,
+            READY_MSG,
+        )
     # typing: run_app is a NoReturn method, unless received signal
-    web.run_app(app, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)  # type: ignore
+    web.run_app(
+        app,
+        host=server_cfg.LISTEN_ADDRESS,
+        port=server_cfg.LISTEN_PORT,
+        loop=loop,
+    )  # type: ignore
