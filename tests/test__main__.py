@@ -74,7 +74,7 @@ def test_main(
     # ------ check result ------ #
     _logger_mock.assert_called_once_with(
         mocker.ANY,
-        format=_in_server_cfg.SERVER_LOGGING_LOG_FORMAT,
+        log_format=_in_server_cfg.SERVER_LOGGING_LOG_FORMAT,
         level=_in_server_cfg.SERVER_LOGGING_LEVEL,
         enable_server_log=_in_server_cfg.UPLOAD_LOGGING_SERVER_LOGS,
         server_logstream_suffix=_in_server_cfg.SERVER_LOGSTREAM_SUFFIX,
