@@ -92,7 +92,7 @@ class AWSIoTLogger:
                 logger.error(
                     (f"failed to create mtls connection to remote: {e.__cause__}")
                 )
-                raise e.__cause__
+                raise e.__cause__ from None
             logger.error(f"failed to create {log_group_name=}: {e!r}")
             raise
         except Exception as e:
@@ -118,7 +118,7 @@ class AWSIoTLogger:
                 logger.error(
                     (f"failed to create mtls connection to remote: {e.__cause__}")
                 )
-                raise e.__cause__
+                raise e.__cause__ from None
             logger.error(f"failed to create {log_stream_name=}@{log_group_name}: {e!r}")
             raise
         except Exception as e:
