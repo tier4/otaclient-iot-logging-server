@@ -53,28 +53,28 @@ def socket_conn_mock(mocker: pytest_mock.MockerFixture, socket_object_mock):
 
 
 @pytest.mark.parametrize(
-    "input, expected",
+    "_input, expected",
     (
         (socket_path := "/a/normal/socket/path", socket_path),
         ("@a/abstract/unix/socket", "\0a/abstract/unix/socket"),
     ),
 )
-def test_get_notify_socket(input, expected, monkeypatch):
-    monkeypatch.setenv(_sd_notify.SD_NOTIFY_SOCKET_ENV, input)
+def test_get_notify_socket(_input, expected, monkeypatch):
+    monkeypatch.setenv(_sd_notify.SD_NOTIFY_SOCKET_ENV, _input)
     assert _sd_notify.get_notify_socket() == expected
 
 
 @pytest.mark.parametrize(
-    "input, expected",
+    "_input, expected",
     (
         ("/a/normal/socket/path", True),
         ("@a/abstract/unix/socket", True),
         (None, False),
     ),
 )
-def test_sd_notify_enabled(input, expected, monkeypatch):
-    if input:
-        monkeypatch.setenv(_sd_notify.SD_NOTIFY_SOCKET_ENV, input)
+def test_sd_notify_enabled(_input, expected, monkeypatch):
+    if _input:
+        monkeypatch.setenv(_sd_notify.SD_NOTIFY_SOCKET_ENV, _input)
     assert _sd_notify.sd_notify_enabled() == expected
 
 
