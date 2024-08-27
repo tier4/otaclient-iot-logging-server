@@ -53,14 +53,14 @@ class _LogTeeHandler(logging.Handler):
 def config_logging(
     queue: Queue[tuple[str, LogMessage]],
     *,
-    format: str,
+    log_format: str,
     level: str,
     enable_server_log: bool,
     server_logstream_suffix: str,
 ):
     # NOTE: for the root logger, set to CRITICAL to filter away logs from other
     #       external modules unless reached CRITICAL level.
-    logging.basicConfig(level=logging.CRITICAL, format=format, force=True)
+    logging.basicConfig(level=logging.CRITICAL, format=log_format, force=True)
     # NOTE: set the <loglevel> to the package root logger
     root_logger = logging.getLogger(root_package_name)
     root_logger.setLevel(level)

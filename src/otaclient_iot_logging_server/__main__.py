@@ -32,7 +32,7 @@ def main() -> None:
     # ------ configure local logging ------ #
     root_logger = config_logging(
         queue,
-        format=server_cfg.SERVER_LOGGING_LOG_FORMAT,
+        log_format=server_cfg.SERVER_LOGGING_LOG_FORMAT,
         level=server_cfg.SERVER_LOGGING_LEVEL,
         enable_server_log=server_cfg.UPLOAD_LOGGING_SERVER_LOGS,
         server_logstream_suffix=server_cfg.SERVER_LOGSTREAM_SUFFIX,
