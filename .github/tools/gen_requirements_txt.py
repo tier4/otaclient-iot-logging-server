@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import sys
-from typing import Any
-
 import tomllib
+from typing import Any
 
 
 def gen_requirements_txt(pyproject_cfg: dict[str, Any]) -> str:
