@@ -1,3 +1,5 @@
 .devcontainer/
 build/
 dist/
+tests/
+*venv*/

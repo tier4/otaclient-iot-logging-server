@@ -1,65 +1,65 @@
 # ------ common build args ------ #
-ARG PYTHON_VERSION=3.13
-ARG PYTHON_BASE_VER=slim
-ARG PYTHON_VENV=/venv
+ARG UBUNTU_VER="noble"
 
 #
-# ------ prepare venv ------ #
+# ------ build package ------ #
 #
-FROM python:${PYTHON_VERSION}-${PYTHON_BASE_VER} AS venv_builder
+FROM ubuntu:${UBUNTU_VER} AS builder
 
-ARG PYTHON_VENV
+COPY . /src/
 
-COPY ./src ./pyproject.toml /source_code/
-
-# ------ install build deps ------ #
 RUN set -eux; \
+	# install build deps
 	apt-get update ; \
 	apt-get install -y --no-install-recommends \
-		gcc \
 		git \
-		libcurl4-openssl-dev \
-		libssl-dev \
-		python3-dev; \
+		python3-pip \
+		python3-venv; \
 	apt-get clean; \
-	# ------ setup virtual env and build ------ #
-	python3 -m venv ${PYTHON_VENV} ; \
-	. ${PYTHON_VENV}/bin/activate ; \
-	export PYTHONDONTWRITEBYTECODE=1 ; \
-	cd /source_code ;\
-	python3 -m pip install -U pip ; \
-	python3 -m pip install . ;\
-	# ------ post installation, cleanup ------ #
-	# cleanup the python venv again
-	# see python-slim Dockerfile for more details
-	find ${PYTHON_VENV} -depth \
-			\( \
-				\( -type d -a \( -name test -o -name tests -o -name idle_test \) \) \
-				-o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \
-			\) -exec rm -rf '{}' +
+	# prepare build env
+	mkdir -p /dist; \
+	python3 -m venv /venv; \
+	. /venv/bin/activate; \
+	pip install hatch; \
+	# start to build package
+	cd /src; \
+	hatch build -t wheel /dist
 
 #
-# ------ build final image ------ #
+# ------ build image ------ #
 #
-FROM python:${PYTHON_VERSION}-${PYTHON_BASE_VER}
+FROM ubuntu:${UBUNTU_VER}
 
-ARG PYTHON_VENV
-ARG CMD_NAME
-
-COPY --from=venv_builder ${PYTHON_VENV} ${PYTHON_VENV}
+ENV VENV="/iot_logging_server_venv"
 
 # add missing libs
-RUN set -eux ; \
-	apt-get update ; \
+RUN --mount=type=bind,from=builder,source=/dist,target=/dist \
+	set -eux; \
+	apt-get update; \
 	apt-get install -y --no-install-recommends \
-		libcurl4 ; \
+		python3-pip \
+		python3-venv; \
+	# install package
+	python3 -m venv ${VENV}; \
+	. ${VENV}/bin/activate; \
+	pip install /dist/*.whl; \
+	# cleanup
+	apt-get purge -y python3-pip; \
+	apt-get autoremove -y; \
+	apt-get clean; \
 	rm -rf \
 		/var/lib/apt/lists/* \
 		/root/.cache \
 		/tmp/* ;\
+	# cleanup the python env
+	find ${VENV} -depth \
+			\( \
+				\( -type d -a \( -name test -o -name tests -o -name idle_test \) \) \
+				-o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \
+			\) -exec rm -rf '{}' + ; \
 	# add mount points placeholder
 	mkdir -p /opt /greengrass
 
-ENV PATH="${PYTHON_VENV}/bin:${PATH}"
+ENV PATH="${VENV}/bin:${PATH}"
 
 CMD ["iot_logging_server"]
