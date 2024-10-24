@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import ssl
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -22,7 +23,6 @@ from typing import Optional
 from awsiot_credentialhelper.boto3_session import Boto3SessionProvider
 from awsiot_credentialhelper.boto3_session import Pkcs11Config as aws_PKcs11Config
 from boto3 import Session
-from OpenSSL import crypto
 
 from otaclient_iot_logging_server._utils import parse_pkcs11_uri
 from otaclient_iot_logging_server.greengrass_config import (
@@ -65,10 +65,8 @@ def _convert_to_pem(_data: bytes) -> bytes:
     """Unconditionally convert input cert to PEM format."""
     if _data.startswith(b"-----BEGIN CERTIFICATE-----"):
         return _data
-    return crypto.dump_certificate(
-        crypto.FILETYPE_PEM,
-        crypto.load_certificate(crypto.FILETYPE_ASN1, _data),
-    )
+    # the input _data represents a DER format cert
+    return ssl.DER_cert_to_PEM_cert(_data).encode()
 
 
 def _load_certificate(cert_path: str, pkcs11_cfg: Optional[PKCS11Config]) -> bytes:
