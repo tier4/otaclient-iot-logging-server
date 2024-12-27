@@ -26,16 +26,17 @@ enum LogType {
   METRICS = 1;
 }
 enum LogLevel {
-  TRACE = 0;
-  DEBUG = 1;
-  INFO = 2;
-  WARN = 3;
-  ERROR = 4;
-  FATAL = 5;
+  UNSPECIFIC = 0;
+  TRACE = 1;
+  DEBUG = 2;
+  INFO = 3;
+  WARN = 4;
+  ERROR = 5;
+  FATAL = 6;
 }
 enum ErrorCode {
   OK = 0;
-  UNKNOWN = 1;
+  FAILED = 1;
 }
 message PutLogRequest {
   LogType type = 1;
