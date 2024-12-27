@@ -1,0 +1,50 @@
+// Copyright 2022 TIER IV, INC. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+service OtaClientLoggingService {
+  /*
+   * `PutLog` service requests OTA Client logging service to put log.
+   */
+  rpc PutLog(PutLogRequest) returns (PutLogResponse) {}
+}
+
+enum LogType {
+  LOG = 0;
+  METRICS = 1;
+}
+enum LogLevel {
+  TRACE = 0;
+  DEBUG = 1;
+  INFO = 2;
+  WARN = 3;
+  ERROR = 4;
+  FATAL = 5;
+}
+enum ErrorCode {
+  OK = 0;
+  UNKNOWN = 1;
+}
+message PutLogRequest {
+  LogType type = 1;
+  uint64 timestamp = 2;
+  LogLevel level = 3;
+  string data = 4;
+}
+
+message PutLogResponse {
+  ErrorCode code = 1;
+  string message = 2;
+}
