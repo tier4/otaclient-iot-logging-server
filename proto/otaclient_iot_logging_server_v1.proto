@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-service OtaClientLoggingService {
+service OtaClientIoTLoggingService {
   /*
    * `PutLog` service requests OTA Client logging service to put log.
    */
@@ -25,6 +25,7 @@ enum LogType {
   LOG = 0;
   METRICS = 1;
 }
+
 enum LogLevel {
   UNSPECIFIC = 0;
   TRACE = 1;
@@ -34,15 +35,19 @@ enum LogLevel {
   ERROR = 5;
   FATAL = 6;
 }
+
 enum ErrorCode {
-  OK = 0;
-  FAILED = 1;
+  NO_FAILURE = 0;
+  SERVER_ERROR = 1;
+  NOT_ALLOWED_ECU_ID = 2;
 }
+
 message PutLogRequest {
-  LogType type = 1;
-  uint64 timestamp = 2;
-  LogLevel level = 3;
-  string data = 4;
+  int32 ecu_id = 1;
+  LogType log_type = 2;
+  uint64 timestamp = 3;
+  LogLevel level = 4;
+  string data = 5;
 }
 
 message PutLogResponse {
