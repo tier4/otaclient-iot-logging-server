@@ -44,8 +44,9 @@ class LogLevel(EnumWrapper):
 
 class ErrorCode(EnumWrapper):
     NO_FAILURE = pb2.NO_FAILURE
-    SERVER_ERROR = pb2.SERVER_ERROR
+    SERVER_QUEUE_FULL = pb2.SERVER_QUEUE_FULL
     NOT_ALLOWED_ECU_ID = pb2.NOT_ALLOWED_ECU_ID
+    NO_MESSAGE = pb2.NO_MESSAGE
 
 
 # message wrapper definitions

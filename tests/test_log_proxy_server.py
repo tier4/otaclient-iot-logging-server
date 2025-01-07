@@ -19,21 +19,23 @@ import logging
 import os
 import random
 from dataclasses import dataclass
-from http import HTTPStatus
 from pathlib import Path
 from queue import Queue
-from urllib.parse import urljoin
 
-import aiohttp
-import aiohttp.client_exceptions
+import grpc
 import pytest
-from aiohttp import web
 from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.log_proxy_server as log_server_module
 from otaclient_iot_logging_server._common import LogsQueue
 from otaclient_iot_logging_server.ecu_info import parse_ecu_info
-from otaclient_iot_logging_server.log_proxy_server import LoggingPostHandler
+from otaclient_iot_logging_server.v1 import otaclient_iot_logging_server_v1_pb2 as pb2
+from otaclient_iot_logging_server.v1 import (
+    otaclient_iot_logging_server_v1_pb2_grpc as v1_grpc,
+)
+from otaclient_iot_logging_server.v1 import types
+from otaclient_iot_logging_server.v1.api_stub import OtaClientIoTLoggingServiceV1
+from otaclient_iot_logging_server.v1.servicer import OTAClientIoTLoggingServerServicer
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +60,9 @@ _test_server_cfg = _ServerConfig()
 @dataclass
 class MessageEntry:
     ecu_id: str
+    log_type: types.LogType
+    timestamp: int
+    level: types.LogLevel
     message: str
 
 
@@ -72,78 +77,71 @@ def generate_random_msgs(
 ) -> list[MessageEntry]:
     _res: list[MessageEntry] = []
     for _ in range(msg_num):
-        _ecu, *_ = random.sample(ecus_list, 1)
-        _msg = os.urandom(msg_len).hex()
-        _res.append(MessageEntry(_ecu, _msg))
+        _ecu_id, *_ = random.sample(ecus_list, 1)
+        _log_type = random.choice(list(types.LogType))
+        _timestamp = random.randint(0, 2**64 - 1)
+        _level = random.choice(list(types.LogLevel))
+        _message = os.urandom(msg_len).hex()
+        _res.append(MessageEntry(_ecu_id, _log_type, _timestamp, _level, _message))
     return _res
 
 
 class TestLogProxyServer:
-
-    SERVER_URL = (
-        f"http://{_test_server_cfg.LISTEN_ADDRESS}:{_test_server_cfg.LISTEN_PORT}/"
-    )
+    SERVER_URL = f"{_test_server_cfg.LISTEN_ADDRESS}:{_test_server_cfg.LISTEN_PORT}"
     TOTAL_MSG_NUM = 4096
 
     @pytest.fixture(autouse=True)
     def mock_ecu_info(self, mocker: MockerFixture):
-        ecu_info = parse_ecu_info(TEST_DIR / "ecu_info.yaml")
-        mocker.patch(f"{MODULE}.ecu_info", ecu_info)
+        self._ecu_info = parse_ecu_info(TEST_DIR / "ecu_info.yaml")
+        mocker.patch(f"{MODULE}.ecu_info", self._ecu_info)
 
     @pytest.fixture(autouse=True)
     async def launch_server(self, mocker: MockerFixture, mock_ecu_info):
-        """
-        See https://docs.aiohttp.org/en/stable/web_advanced.html#custom-resource-implementation
-            for more details.
-        """
         mocker.patch(f"{MODULE}.server_cfg", _test_server_cfg)
 
         queue: LogsQueue = Queue()
         self._queue = queue
 
-        handler = LoggingPostHandler(queue)
-        app = web.Application()
-        # mute the aiohttp server logging
-        aiohttp_server_logger = logging.getLogger("aiohttp")
-        aiohttp_server_logger.setLevel("ERROR")
-        # add handler to the server
-        app.add_routes([web.post(r"/{ecu_id}", handler.logging_post_handler)])
-        # star the server
-        runner = web.AppRunner(app)
+        servicer = OTAClientIoTLoggingServerServicer(
+            ecu_info=self._ecu_info,
+            queue=queue,
+        )
+
+        server = grpc.aio.server()
+        v1_grpc.add_OtaClientIoTLoggingServiceServicer_to_server(
+            servicer=OtaClientIoTLoggingServiceV1(servicer), server=server
+        )
+        server.add_insecure_port(self.SERVER_URL)
         try:
-            await runner.setup()
-            site = web.TCPSite(
-                runner, _test_server_cfg.LISTEN_ADDRESS, _test_server_cfg.LISTEN_PORT
-            )
-            await site.start()
-            logger.info(f"test log_proxy_server started at {self.SERVER_URL}")
+            await server.start()
             yield
         finally:
-            await runner.cleanup()
-
-    @pytest.fixture(autouse=True)
-    async def client_sesion(self):
-        client_session = aiohttp.ClientSession(
-            raise_for_status=True,
-            timeout=aiohttp.ClientTimeout(total=0.2),  # for speedup testing
-        )
-        try:
-            yield client_session
-        finally:
-            await client_session.close()
+            await server.stop(None)
 
     @pytest.fixture(autouse=True)
     def prepare_test_data(self):
         self._msgs = generate_random_msgs(msg_num=self.TOTAL_MSG_NUM)
 
-    async def test_server(self, client_sesion: aiohttp.ClientSession):
+    async def test_server(self):
         # ------ execution ------ #
         logger.info(f"sending {self.TOTAL_MSG_NUM} msgs to {self.SERVER_URL}...")
+
+        async def send_msg(item):
+            _req = pb2.PutLogRequest(
+                ecu_id=item.ecu_id,
+                log_type=item.log_type,
+                timestamp=item.timestamp,
+                level=item.level,
+                message=item.message,
+            )
+            async with grpc.aio.insecure_channel(self.SERVER_URL) as channel:
+                stub = v1_grpc.OtaClientIoTLoggingServiceStub(channel)
+                _response = await stub.PutLog(_req)
+                assert _response.code == pb2.ErrorCode.NO_FAILURE
+
         for item in self._msgs:
-            _ecu_id, _msg = item.ecu_id, item.message
-            _log_upload_endpoint_url = urljoin(self.SERVER_URL, _ecu_id)
-            async with client_sesion.post(_log_upload_endpoint_url, data=_msg):
-                pass  # raise_for_status is set on session
+            await send_msg(item)
+
         # ------ check result ------ #
         # ensure the all msgs are sent in order to the queue by the server.
         logger.info("checking all the received messages...")
@@ -153,20 +151,22 @@ class TestLogProxyServer:
             assert _log_msg["message"] == item.message
         assert self._queue.empty()
 
-    @pytest.mark.parametrize(
-        "_ecu_id, _data",
-        [
-            # unknowned ECU's request will be dropped
-            ("bad_ecu_id", "valid_msg"),
-            # empty message will be dropped
-            ("main", ""),
-        ],
-    )
-    async def test_reject_invalid_request(
-        self, _ecu_id: str, _data: str, client_sesion: aiohttp.ClientSession
-    ):
-        with pytest.raises(aiohttp.client_exceptions.ClientResponseError) as exc_info:
-            _log_upload_endpoint_url = urljoin(self.SERVER_URL, _ecu_id)
-            async with client_sesion.post(_log_upload_endpoint_url, data=_data):
-                pass  # raise_for_status is set on session
-        assert exc_info.value.status == HTTPStatus.BAD_REQUEST
+    async def test_reject_invalid_ecu_id(self):
+        _req = pb2.PutLogRequest(
+            ecu_id="bad_ecu_id",
+            message="valid_msg",
+        )
+        async with grpc.aio.insecure_channel(self.SERVER_URL) as channel:
+            stub = v1_grpc.OtaClientIoTLoggingServiceStub(channel)
+            _response = await stub.PutLog(_req)
+            assert _response.code == pb2.ErrorCode.NOT_ALLOWED_ECU_ID
+
+    async def test_reject_invalid_message(self):
+        _req = pb2.PutLogRequest(
+            ecu_id="main",
+            message="",
+        )
+        async with grpc.aio.insecure_channel(self.SERVER_URL) as channel:
+            stub = v1_grpc.OtaClientIoTLoggingServiceStub(channel)
+            _response = await stub.PutLog(_req)
+            assert _response.code == pb2.ErrorCode.NO_MESSAGE

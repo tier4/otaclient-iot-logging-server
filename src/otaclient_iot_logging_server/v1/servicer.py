@@ -60,10 +60,13 @@ class OTAClientIoTLoggingServerServicer:
         _timestamp = request.timestamp
         _message = request.message
         _allowed_ecus = self._allowed_ecus
-        # don't allow empty request or unknowned ECUs
+        # don't allow empty request
+        if not _message:
+            return PutLogResponse(code=ErrorCode.NO_MESSAGE)
+        # don't allow unknowned ECUs
         # if ECU id is unknown(not listed in ecu_info.yaml), drop this log.
-        if not _message or (_allowed_ecus and _ecu_id not in _allowed_ecus):
-            return PutLogResponse(ErrorCode.NOT_ALLOWED_ECU_ID)
+        if _allowed_ecus and _ecu_id not in _allowed_ecus:
+            return PutLogResponse(code=ErrorCode.NOT_ALLOWED_ECU_ID)
 
         _logging_msg = LogMessage(
             timestamp=_timestamp * 1000,  # milliseconds
@@ -74,6 +77,6 @@ class OTAClientIoTLoggingServerServicer:
             self._queue.put_nowait((_ecu_id, _logging_msg))
         except Full:
             logger.debug(f"message dropped: {_logging_msg}")
-            return PutLogResponse(code=ErrorCode.SERVER_ERROR)
+            return PutLogResponse(code=ErrorCode.SERVER_QUEUE_FULL)
 
         return PutLogResponse(code=ErrorCode.NO_FAILURE)

@@ -38,8 +38,9 @@ enum LogLevel {
 
 enum ErrorCode {
   NO_FAILURE = 0;
-  SERVER_ERROR = 1;
+  SERVER_QUEUE_FULL = 1;
   NOT_ALLOWED_ECU_ID = 2;
+  NO_MESSAGE = 3;
 }
 
 message PutLogRequest {

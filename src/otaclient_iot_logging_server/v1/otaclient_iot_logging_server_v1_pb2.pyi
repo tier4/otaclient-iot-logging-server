@@ -23,8 +23,9 @@ class LogLevel(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
 class ErrorCode(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = []
     NO_FAILURE: _ClassVar[ErrorCode]
-    SERVER_ERROR: _ClassVar[ErrorCode]
+    SERVER_QUEUE_FULL: _ClassVar[ErrorCode]
     NOT_ALLOWED_ECU_ID: _ClassVar[ErrorCode]
+    NO_MESSAGE: _ClassVar[ErrorCode]
 
 LOG: LogType
 METRICS: LogType
@@ -36,8 +37,9 @@ WARN: LogLevel
 ERROR: LogLevel
 FATAL: LogLevel
 NO_FAILURE: ErrorCode
-SERVER_ERROR: ErrorCode
+SERVER_QUEUE_FULL: ErrorCode
 NOT_ALLOWED_ECU_ID: ErrorCode
+NO_MESSAGE: ErrorCode
 
 class PutLogRequest(_message.Message):
     __slots__ = ["ecu_id", "log_type", "timestamp", "level", "message"]
