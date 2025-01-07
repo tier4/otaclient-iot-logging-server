@@ -46,14 +46,14 @@ class PutLogRequest(_message.Message):
     TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     LEVEL_FIELD_NUMBER: _ClassVar[int]
     DATA_FIELD_NUMBER: _ClassVar[int]
-    ecu_id: int
+    ecu_id: str
     log_type: LogType
     timestamp: int
     level: LogLevel
     data: str
     def __init__(
         self,
-        ecu_id: _Optional[int] = ...,
+        ecu_id: _Optional[str] = ...,
         log_type: _Optional[_Union[LogType, str]] = ...,
         timestamp: _Optional[int] = ...,
         level: _Optional[_Union[LogLevel, str]] = ...,

@@ -56,7 +56,7 @@ class ErrorCode(EnumWrapper):
 
 class PutLogRequest(MessageWrapper[pb2.PutLogRequest]):
     __slots__ = calculate_slots(pb2.PutLogRequest)
-    ecu_id: int
+    ecu_id: str
     log_type: LogType
     timestamp: int
     level: LogLevel
@@ -65,7 +65,7 @@ class PutLogRequest(MessageWrapper[pb2.PutLogRequest]):
     def __init__(
         self,
         *,
-        ecu_id: _Optional[int] = ...,
+        ecu_id: _Optional[str] = ...,
         log_type: _Optional[LogType] = ...,
         timestamp: _Optional[int] = ...,
         level: _Optional[LogLevel] = ...,

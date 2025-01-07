@@ -43,7 +43,7 @@ enum ErrorCode {
 }
 
 message PutLogRequest {
-  int32 ecu_id = 1;
+  string ecu_id = 1;
   LogType log_type = 2;
   uint64 timestamp = 3;
   LogLevel level = 4;
