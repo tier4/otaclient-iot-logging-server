@@ -60,7 +60,7 @@ class PutLogRequest(MessageWrapper[pb2.PutLogRequest]):
     log_type: LogType
     timestamp: int
     level: LogLevel
-    data: str
+    message: str
 
     def __init__(
         self,
@@ -69,7 +69,7 @@ class PutLogRequest(MessageWrapper[pb2.PutLogRequest]):
         log_type: _Optional[LogType] = ...,
         timestamp: _Optional[int] = ...,
         level: _Optional[LogLevel] = ...,
-        data: _Optional[str] = ...,
+        message: _Optional[str] = ...,
     ) -> None: ...
 
 

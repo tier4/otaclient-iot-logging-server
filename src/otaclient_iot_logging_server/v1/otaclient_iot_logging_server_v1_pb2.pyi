@@ -40,24 +40,24 @@ SERVER_ERROR: ErrorCode
 NOT_ALLOWED_ECU_ID: ErrorCode
 
 class PutLogRequest(_message.Message):
-    __slots__ = ["ecu_id", "log_type", "timestamp", "level", "data"]
+    __slots__ = ["ecu_id", "log_type", "timestamp", "level", "message"]
     ECU_ID_FIELD_NUMBER: _ClassVar[int]
     LOG_TYPE_FIELD_NUMBER: _ClassVar[int]
     TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     LEVEL_FIELD_NUMBER: _ClassVar[int]
-    DATA_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
     ecu_id: str
     log_type: LogType
     timestamp: int
     level: LogLevel
-    data: str
+    message: str
     def __init__(
         self,
         ecu_id: _Optional[str] = ...,
         log_type: _Optional[_Union[LogType, str]] = ...,
         timestamp: _Optional[int] = ...,
         level: _Optional[_Union[LogLevel, str]] = ...,
-        data: _Optional[str] = ...,
+        message: _Optional[str] = ...,
     ) -> None: ...
 
 class PutLogResponse(_message.Message):

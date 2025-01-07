@@ -58,7 +58,7 @@ class OTAClientIoTLoggingServerServicer:
         """
         _ecu_id = request.ecu_id
         _timestamp = request.timestamp
-        _message = request.data
+        _message = request.message
         _allowed_ecus = self._allowed_ecus
         # don't allow empty request or unknowned ECUs
         # if ECU id is unknown(not listed in ecu_info.yaml), drop this log.
