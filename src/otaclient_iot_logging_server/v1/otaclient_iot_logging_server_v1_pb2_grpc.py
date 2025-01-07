@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from otaclient_iot_logging_server_pb2.v1 import (
+from otaclient_iot_logging_server.v1 import (
     otaclient_iot_logging_server_v1_pb2 as otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2,
 )
 
