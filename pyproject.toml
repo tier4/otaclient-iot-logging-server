@@ -76,6 +76,15 @@ sources = [
   "src",
 ]
 
+[tool.black]
+line-length = 88
+target-version = [
+  'py311',
+]
+extend-exclude = '''(
+  ^.*(_pb2.pyi?|_pb2_grpc.pyi?)$
+)'''
+
 [tool.ruff]
 target-version = "py311"
 # NOTE: not include tests and tools for now
@@ -83,6 +92,10 @@ include = [
   "pyproject.toml",
   "src/**/*.py",
   "tests/**/*.py",
+]
+extend-exclude = [
+  "*_pb2.py*",
+  "*_pb2_grpc.py*",
 ]
 
 lint.select = [
@@ -129,6 +142,10 @@ source = [
 relative_files = true
 
 [tool.coverage.report]
+omit = [
+  "**/*_pb2.py*",
+  "**/*_pb2_grpc.py*",
+]
 exclude_also = [
   "def __repr__",
   "if __name__ == .__main__.:",
