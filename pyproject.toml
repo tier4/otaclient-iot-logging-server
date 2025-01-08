@@ -26,10 +26,11 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "aiohttp>=3.10.2,<3.11",
   "awsiot-credentialhelper>=0.6,<0.7",
   "boto3>=1.34.35,<1.35",
   "botocore==1.34.35,<1.35",
+  "grpcio>=1.53.2,<1.69",
+  "protobuf>=4.21.12,<5.29",
   "pydantic>=2.6,<3",
   "pydantic-settings>=2.2.1,<3",
   "pyyaml>=6.0.1,<7",
