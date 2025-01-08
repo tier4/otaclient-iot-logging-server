@@ -18,7 +18,6 @@ from __future__ import annotations
 import contextlib
 import logging
 import time
-from queue import Queue
 
 from otaclient_iot_logging_server import package_name as root_package_name
 from otaclient_iot_logging_server._common import LogGroupType, LogMessage, LogsQueue
