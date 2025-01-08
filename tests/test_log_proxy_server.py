@@ -27,7 +27,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.log_proxy_server as log_server_module
-from otaclient_iot_logging_server._common import LogsQueue
+from otaclient_iot_logging_server._common import LogGroupType, LogsQueue
 from otaclient_iot_logging_server.ecu_info import parse_ecu_info
 from otaclient_iot_logging_server.v1 import otaclient_iot_logging_server_v1_pb2 as pb2
 from otaclient_iot_logging_server.v1 import (
@@ -139,6 +139,14 @@ class TestLogProxyServer:
                 _response = await stub.PutLog(_req)
                 assert _response.code == pb2.ErrorCode.NO_FAILURE
 
+        def convert_from_log_type_to_log_group_type(log_type):
+            """
+            Convert input log type to log group type
+            """
+            if log_type == types.LogType.METRICS:
+                return LogGroupType.METRICS
+            return LogGroupType.LOG
+
         for item in self._msgs:
             await send_msg(item)
 
@@ -146,8 +154,11 @@ class TestLogProxyServer:
         # ensure the all msgs are sent in order to the queue by the server.
         logger.info("checking all the received messages...")
         for item in self._msgs:
-            _ecu_id, _log_msg = self._queue.get_nowait()
+            _log_group_type, _ecu_id, _log_msg = self._queue.get_nowait()
             assert _ecu_id == item.ecu_id
+            assert _log_group_type == convert_from_log_type_to_log_group_type(
+                item.log_type
+            )
             assert _log_msg["message"] == item.message
         assert self._queue.empty()
 

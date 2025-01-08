@@ -19,10 +19,11 @@ import logging
 import time
 from queue import Full
 
-from otaclient_iot_logging_server._common import LogMessage, LogsQueue
+from otaclient_iot_logging_server._common import LogGroupType, LogMessage, LogsQueue
 from otaclient_iot_logging_server.ecu_info import ECUInfo
 from otaclient_iot_logging_server.v1.types import (
     ErrorCode,
+    LogType,
     PutLogRequest,
     PutLogResponse,
 )
@@ -57,7 +58,17 @@ class OTAClientIoTLoggingServerServicer:
         NOTE: use <ecu_id> as log_stream_suffix, each ECU has its own
               logging stream for uploading.
         """
+
+        def convert_from_log_type_to_log_group_type(log_type):
+            """
+            Convert input log type to log group type
+            """
+            if log_type == LogType.METRICS:
+                return LogGroupType.METRICS
+            return LogGroupType.LOG
+
         _ecu_id = request.ecu_id
+        _log_group_type = convert_from_log_type_to_log_group_type(request.log_type)
         _timestamp = (
             request.timestamp if request.timestamp else int(time.time()) * 1000
         )  # milliseconds
@@ -76,7 +87,7 @@ class OTAClientIoTLoggingServerServicer:
         )
         # logger.debug(f"receive log from {_ecu_id}: {_logging_msg}")
         try:
-            self._queue.put_nowait((_ecu_id, _logging_msg))
+            self._queue.put_nowait((_log_group_type, _ecu_id, _logging_msg))
         except Full:
             logger.debug(f"message dropped: {_logging_msg}")
             return PutLogResponse(code=ErrorCode.SERVER_QUEUE_FULL)
