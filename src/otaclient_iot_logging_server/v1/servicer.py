@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from queue import Full
 
 from otaclient_iot_logging_server._common import LogMessage, LogsQueue
@@ -57,19 +58,18 @@ class OTAClientIoTLoggingServerServicer:
               logging stream for uploading.
         """
         _ecu_id = request.ecu_id
-        _timestamp = request.timestamp
+        _timestamp = request.timestamp if request.timestamp else int(time.time()) * 1000 # milliseconds
         _message = request.message
-        _allowed_ecus = self._allowed_ecus
-        # don't allow empty request
+        # don't allow empty message request
         if not _message:
             return PutLogResponse(code=ErrorCode.NO_MESSAGE)
         # don't allow unknowned ECUs
         # if ECU id is unknown(not listed in ecu_info.yaml), drop this log.
-        if _allowed_ecus and _ecu_id not in _allowed_ecus:
+        if self._allowed_ecus and _ecu_id not in self._allowed_ecus:
             return PutLogResponse(code=ErrorCode.NOT_ALLOWED_ECU_ID)
 
         _logging_msg = LogMessage(
-            timestamp=_timestamp * 1000,  # milliseconds
+            timestamp=_timestamp,
             message=_message,
         )
         # logger.debug(f"receive log from {_ecu_id}: {_logging_msg}")

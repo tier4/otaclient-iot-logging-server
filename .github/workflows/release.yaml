@@ -21,16 +21,16 @@ jobs:
           # generate the wheel.
           python-version: "3.8"
 
-      - name: install build deps
+      - name: Install build deps
         run: |
           python3 -m pip install -U pip
           python3 -m pip install -U hatch
 
-      - name: build otaclient IoT logging server package
+      - name: Build otaclient IoT logging server package
         run: |
           hatch build -t wheel
 
-      - name: build otaclient IoT logging server proto package
+      - name: Build otaclient IoT logging server proto package
         run: |
           pushd proto
           hatch build -t wheel
