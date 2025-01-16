@@ -31,6 +31,7 @@ class LogType(EnumWrapper):
     LOG = pb2.LOG
     METRICS = pb2.METRICS
 
+
 class ErrorCode(EnumWrapper):
     NO_FAILURE = pb2.NO_FAILURE
     SERVER_QUEUE_FULL = pb2.SERVER_QUEUE_FULL

@@ -58,7 +58,7 @@ class OTAClientIoTLoggingServerServicer:
               logging stream for uploading.
         """
         _ecu_id = request.ecu_id
-        _timestamp=int(time.time()) * 1000,  # milliseconds
+        _timestamp = (int(time.time()) * 1000,)  # milliseconds
         _message = request.message
         # don't allow empty message request
         if not _message:
