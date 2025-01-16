@@ -31,17 +31,6 @@ class LogType(EnumWrapper):
     LOG = pb2.LOG
     METRICS = pb2.METRICS
 
-
-class LogLevel(EnumWrapper):
-    UNSPECIFIC = pb2.UNSPECIFIC
-    TRACE = pb2.TRACE
-    DEBUG = pb2.DEBUG
-    INFO = pb2.INFO
-    WARN = pb2.WARN
-    ERROR = pb2.ERROR
-    FATAL = pb2.FATAL
-
-
 class ErrorCode(EnumWrapper):
     NO_FAILURE = pb2.NO_FAILURE
     SERVER_QUEUE_FULL = pb2.SERVER_QUEUE_FULL
@@ -59,8 +48,6 @@ class PutLogRequest(MessageWrapper[pb2.PutLogRequest]):
     __slots__ = calculate_slots(pb2.PutLogRequest)
     ecu_id: str
     log_type: LogType
-    timestamp: int
-    level: LogLevel
     message: str
 
     def __init__(
@@ -68,8 +55,6 @@ class PutLogRequest(MessageWrapper[pb2.PutLogRequest]):
         *,
         ecu_id: _Optional[str] = ...,
         log_type: _Optional[LogType] = ...,
-        timestamp: _Optional[int] = ...,
-        level: _Optional[LogLevel] = ...,
         message: _Optional[str] = ...,
     ) -> None: ...
 

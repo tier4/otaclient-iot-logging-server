@@ -61,8 +61,6 @@ _test_server_cfg = _ServerConfig()
 class MessageEntry:
     ecu_id: str
     log_type: types.LogType
-    timestamp: int
-    level: types.LogLevel
     message: str
 
 
@@ -79,10 +77,8 @@ def generate_random_msgs(
     for _ in range(msg_num):
         _ecu_id, *_ = random.sample(ecus_list, 1)
         _log_type = random.choice(list(types.LogType))
-        _timestamp = random.randint(0, 2**64 - 1)
-        _level = random.choice(list(types.LogLevel))
         _message = os.urandom(msg_len).hex()
-        _res.append(MessageEntry(_ecu_id, _log_type, _timestamp, _level, _message))
+        _res.append(MessageEntry(_ecu_id, _log_type, _message))
     return _res
 
 
@@ -130,8 +126,6 @@ class TestLogProxyServer:
             _req = pb2.PutLogRequest(
                 ecu_id=item.ecu_id,
                 log_type=item.log_type,
-                timestamp=item.timestamp,
-                level=item.level,
                 message=item.message,
             )
             async with grpc.aio.insecure_channel(self.SERVER_URL) as channel:
