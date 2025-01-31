@@ -20,6 +20,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 
 import grpc.aio
+from aiohttp import web
 
 from otaclient_iot_logging_server._common import LogsQueue
 from otaclient_iot_logging_server._sd_notify import (
@@ -29,11 +30,11 @@ from otaclient_iot_logging_server._sd_notify import (
 )
 from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.ecu_info import ecu_info
+from otaclient_iot_logging_server.servicer import OTAClientIoTLoggingServerServicer
 from otaclient_iot_logging_server.v1 import (
     otaclient_iot_logging_server_v1_pb2_grpc as v1_grpc,
 )
 from otaclient_iot_logging_server.v1.api_stub import OtaClientIoTLoggingServiceV1
-from otaclient_iot_logging_server.v1.servicer import OTAClientIoTLoggingServerServicer
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,20 @@ def launch_server(queue: LogsQueue) -> None:
             READY_MSG,
         )
 
+    async def _http_server_launcher():
+        handler = OTAClientIoTLoggingServerServicer(ecu_info=ecu_info, queue=queue)
+        app = web.Application()
+        app.add_routes([web.post(r"/{ecu_id}", handler.put_log_http)])
+
+        # typing: run_app is a NoReturn method, unless received signal
+        web.run_app(
+            app,
+            host=server_cfg.LISTEN_ADDRESS,
+            port=server_cfg.LISTEN_PORT,
+            loop=loop,
+        )  # type: ignore
+        pass
+
     async def _grpc_server_launcher():
         thread_pool = ThreadPoolExecutor(
             thread_name_prefix="otaclient_iot_logging_server",
@@ -72,10 +87,10 @@ def launch_server(queue: LogsQueue) -> None:
             server=server, servicer=otaclient_iot_logging_service_v1
         )
         server.add_insecure_port(
-            f"{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
+            f"{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT_GRPC}"
         )
         logger.info(
-            f"launch grpc server at {server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
+            f"launch grpc server at {server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT_GRPC}"
         )
 
         await server.start()
@@ -85,5 +100,6 @@ def launch_server(queue: LogsQueue) -> None:
             await server.stop(1)
             thread_pool.shutdown(wait=True)
 
+    loop.create_task(_http_server_launcher())
     loop.create_task(_grpc_server_launcher())
     loop.run_forever()

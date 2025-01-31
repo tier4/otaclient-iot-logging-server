@@ -29,5 +29,5 @@ class OtaClientIoTLoggingServiceV1(pb2_grpc.OtaClientIoTLoggingServiceServicer):
         self._stub = otaclient_iot_logging_server_stub
 
     async def PutLog(self, request: pb2.PutLogRequest, context) -> pb2.PutLogResponse:
-        response = await self._stub.put_log(types.PutLogRequest.convert(request))
+        response = await self._stub.put_log_grpc(types.PutLogRequest.convert(request))
         return response.export_pb()

@@ -17,7 +17,11 @@ from __future__ import annotations
 
 import logging
 import time
+from http import HTTPStatus
 from queue import Full
+
+from aiohttp import web
+from aiohttp.web import Request
 
 from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server.ecu_info import ECUInfo
@@ -52,31 +56,57 @@ class OTAClientIoTLoggingServerServicer:
                 "no ecu_info.yaml presented, logging upload filtering is DISABLED"
             )
 
-    async def put_log(self, request: PutLogRequest) -> PutLogResponse:
+    async def put_log(self, ecu_id, message):
         """
-        NOTE: use <ecu_id> as log_stream_suffix, each ECU has its own
-              logging stream for uploading.
+        Put log message into queue.
+
         """
-        _ecu_id = request.ecu_id
-        _timestamp = (int(time.time()) * 1000,)  # milliseconds
-        _message = request.message
         # don't allow empty message request
-        if not _message:
-            return PutLogResponse(code=ErrorCode.NO_MESSAGE)
+        if not message:
+            return ErrorCode.NO_MESSAGE
         # don't allow unknowned ECUs
         # if ECU id is unknown(not listed in ecu_info.yaml), drop this log.
-        if self._allowed_ecus and _ecu_id not in self._allowed_ecus:
-            return PutLogResponse(code=ErrorCode.NOT_ALLOWED_ECU_ID)
+        if self._allowed_ecus and ecu_id not in self._allowed_ecus:
+            return ErrorCode.NOT_ALLOWED_ECU_ID
 
+        _timestamp = (int(time.time()) * 1000,)  # milliseconds
         _logging_msg = LogMessage(
             timestamp=_timestamp,
-            message=_message,
+            message=message,
         )
-        # logger.debug(f"receive log from {_ecu_id}: {_logging_msg}")
+        # logger.debug(f"receive log from {ecu_id}: {_logging_msg}")
         try:
-            self._queue.put_nowait((_ecu_id, _logging_msg))
+            self._queue.put_nowait((ecu_id, _logging_msg))
         except Full:
             logger.debug(f"message dropped: {_logging_msg}")
-            return PutLogResponse(code=ErrorCode.SERVER_QUEUE_FULL)
+            return ErrorCode.SERVER_QUEUE_FULL
 
-        return PutLogResponse(code=ErrorCode.NO_FAILURE)
+        return ErrorCode.NO_FAILURE
+
+    async def put_log_http(self, request: Request) -> PutLogResponse:
+        """
+        put log message from HTTP POST request.
+        """
+        _ecu_id = request.match_info["ecu_id"]
+        _message = await request.text()
+
+        _code = await self.put_log(_ecu_id, _message)
+
+        if _code == ErrorCode.NO_MESSAGE or _code == ErrorCode.NOT_ALLOWED_ECU_ID:
+            _status = HTTPStatus.BAD_REQUEST
+        elif _code == ErrorCode.SERVER_QUEUE_FULL:
+            _status = HTTPStatus.SERVICE_UNAVAILABLE
+        else:
+            _status = HTTPStatus.OK
+
+        return web.Response(status=_status)
+
+    async def put_log_grpc(self, request: PutLogRequest) -> PutLogResponse:
+        """
+        put log message from gRPC request
+        """
+        _ecu_id = request.ecu_id
+        _message = request.message
+
+        _code = await self.put_log(_ecu_id, _message)
+        return PutLogResponse(code=_code)

@@ -39,7 +39,10 @@ def main() -> None:
     )
 
     root_logger.info(
-        f"launching iot_logging_server({__version__}) at http://{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
+        f"launching HTTP iot_logging_server({__version__}) at http://{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
+    )
+    root_logger.info(
+        f"launching gRPC iot_logging_server({__version__}) at http://{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT_GRPC}"
     )
     root_logger.info(f"iot_logging_server config: \n{server_cfg}")
     # ------ launch aws cloudwatch client ------ #
