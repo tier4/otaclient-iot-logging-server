@@ -7,7 +7,7 @@ from otaclient_iot_logging_server.v1 import (
 )
 
 
-class OtaClientIoTLoggingServiceStub(object):
+class OTAClientIoTLoggingServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -17,18 +17,18 @@ class OtaClientIoTLoggingServiceStub(object):
             channel: A grpc.Channel.
         """
         self.PutLog = channel.unary_unary(
-            "/OtaClientIoTLoggingService/PutLog",
+            "/OTAClientIoTLoggingService/PutLog",
             request_serializer=otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2.PutLogRequest.SerializeToString,
             response_deserializer=otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2.PutLogResponse.FromString,
         )
         self.Check = channel.unary_unary(
-            "/OtaClientIoTLoggingService/Check",
+            "/OTAClientIoTLoggingService/Check",
             request_serializer=otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2.HealthCheckRequest.SerializeToString,
             response_deserializer=otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2.HealthCheckResponse.FromString,
         )
 
 
-class OtaClientIoTLoggingServiceServicer(object):
+class OTAClientIoTLoggingServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def PutLog(self, request, context):
@@ -49,7 +49,7 @@ class OtaClientIoTLoggingServiceServicer(object):
         raise NotImplementedError("Method not implemented!")
 
 
-def add_OtaClientIoTLoggingServiceServicer_to_server(servicer, server):
+def add_OTAClientIoTLoggingServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
         "PutLog": grpc.unary_unary_rpc_method_handler(
             servicer.PutLog,
@@ -63,13 +63,13 @@ def add_OtaClientIoTLoggingServiceServicer_to_server(servicer, server):
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-        "OtaClientIoTLoggingService", rpc_method_handlers
+        "OTAClientIoTLoggingService", rpc_method_handlers
     )
     server.add_generic_rpc_handlers((generic_handler,))
 
 
 # This class is part of an EXPERIMENTAL API.
-class OtaClientIoTLoggingService(object):
+class OTAClientIoTLoggingService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -88,7 +88,7 @@ class OtaClientIoTLoggingService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            "/OtaClientIoTLoggingService/PutLog",
+            "/OTAClientIoTLoggingService/PutLog",
             otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2.PutLogRequest.SerializeToString,
             otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2.PutLogResponse.FromString,
             options,
@@ -117,7 +117,7 @@ class OtaClientIoTLoggingService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            "/OtaClientIoTLoggingService/Check",
+            "/OTAClientIoTLoggingService/Check",
             otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2.HealthCheckRequest.SerializeToString,
             otaclient__iot__logging__server__pb2_dot_v1_dot_otaclient__iot__logging__server__v1__pb2.HealthCheckResponse.FromString,
             options,

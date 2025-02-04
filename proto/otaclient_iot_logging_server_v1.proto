@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-service OtaClientIoTLoggingService {
+service OTAClientIoTLoggingService {
   /*
    * `PutLog` service requests OTA Client logging service to put log.
    */
@@ -32,17 +32,30 @@ enum LogType {
   METRICS = 1;
 }
 
+enum LogLevel {
+  UNSPECIFIC_LOG_LEVEL = 0;
+  TRACE = 1;
+  DEBUG = 2;
+  INFO = 3;
+  WARN = 4;
+  ERROR = 5;
+  FATAL = 6;
+}
+
 enum ErrorCode {
-  NO_FAILURE = 0;         // Success
-  SERVER_QUEUE_FULL = 1;  // Error: Server queue is full
-  NOT_ALLOWED_ECU_ID = 2; // Error: Specified ECU ID is not allowed
-  NO_MESSAGE = 3;         // Error: No message in the request
+  UNSPECIFIC_ERROR_CODE = 0; // Unspecific
+  NO_FAILURE = 1;            // Success
+  SERVER_QUEUE_FULL = 2;     // Error: Server queue is full
+  NOT_ALLOWED_ECU_ID = 3;    // Error: Specified ECU ID is not allowed
+  NO_MESSAGE = 4;            // Error: No message in the request
 }
 
 message PutLogRequest {
   string ecu_id = 1;    // target ECU ID
   LogType log_type = 2; // log type
-  string message = 3;   // log message
+  uint64 timestamp = 3; // log timestamp
+  LogLevel level = 4;   // log level
+  string message = 5;   // log message
 }
 
 message PutLogResponse {
