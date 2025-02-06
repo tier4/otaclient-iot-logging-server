@@ -21,11 +21,24 @@ jobs:
           # generate the wheel.
           python-version: "3.8"
 
-      - name: Build wheel and calculate checksum
+      - name: Install build deps
         run: |
-          python3 -m pip install -q -U pip
-          pip install -q -U hatch
+          python3 -m pip install -U pip
+          python3 -m pip install -U hatch
+
+      - name: Build otaclient IoT logging server package
+        run: |
           hatch build -t wheel
+
+      - name: Build otaclient IoT logging server proto package
+        run: |
+          pushd proto
+          hatch build -t wheel
+          popd
+          cp proto/dist/*.whl dist
+
+      - name: calculate checksum
+        run: |
           for WHL in dist/*.whl; \
             do \
               sha256sum ${WHL} | sed -E "s@(\w+)\s+.*@sha256:\1@" > \

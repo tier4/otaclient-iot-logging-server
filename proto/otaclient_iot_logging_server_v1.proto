@@ -14,19 +14,26 @@
 
 syntax = "proto3";
 
-service OtaClientLoggingService {
+service OTAClientIoTLoggingService {
   /*
    * `PutLog` service requests OTA Client logging service to put log.
    */
   rpc PutLog(PutLogRequest) returns (PutLogResponse) {}
+
+  /*
+   * `Check` requests OTA Client logging service to check the health of the
+   * service.
+   */
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 enum LogType {
   LOG = 0;
   METRICS = 1;
 }
+
 enum LogLevel {
-  UNSPECIFIC = 0;
+  UNSPECIFIC_LOG_LEVEL = 0;
   TRACE = 1;
   DEBUG = 2;
   INFO = 3;
@@ -34,18 +41,36 @@ enum LogLevel {
   ERROR = 5;
   FATAL = 6;
 }
+
 enum ErrorCode {
-  OK = 0;
-  FAILED = 1;
+  UNSPECIFIC_ERROR_CODE = 0; // Unspecific
+  NO_FAILURE = 1;            // Success
+  SERVER_QUEUE_FULL = 2;     // Error: Server queue is full
+  NOT_ALLOWED_ECU_ID = 3;    // Error: Specified ECU ID is not allowed
+  NO_MESSAGE = 4;            // Error: No message in the request
 }
+
 message PutLogRequest {
-  LogType type = 1;
-  uint64 timestamp = 2;
-  LogLevel level = 3;
-  string data = 4;
+  string ecu_id = 1;    // target ECU ID
+  LogType log_type = 2; // log type
+  uint64 timestamp = 3; // log timestamp
+  LogLevel level = 4;   // log level
+  string message = 5;   // log message
 }
 
 message PutLogResponse {
-  ErrorCode code = 1;
-  string message = 2;
+  ErrorCode code = 1; // error code
+  string message = 2; // error message
+}
+
+message HealthCheckRequest { string service = 1; }
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3; // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
 }
