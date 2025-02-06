@@ -19,7 +19,7 @@ import logging
 from queue import Queue
 
 import otaclient_iot_logging_server._log_setting
-from otaclient_iot_logging_server._common import LogsQueue
+from otaclient_iot_logging_server._common import LogGroupType, LogsQueue
 from otaclient_iot_logging_server._log_setting import _LogTeeHandler  # type: ignore
 
 MODULE = otaclient_iot_logging_server._log_setting.__name__
@@ -39,5 +39,6 @@ def test_server_logger():
     logger.removeHandler(_handler)
     # ------ check result ------ #
     _log = _queue.get_nowait()
-    assert _log[0] == suffix
-    assert _log[1]
+    assert _log[0] == LogGroupType.LOG
+    assert _log[1] == suffix
+    assert _log[2]
