@@ -54,7 +54,8 @@ class _ServerConfig:
 
     LISTEN_ADDRESS: str = "127.0.0.1"
     LISTEN_PORT: int = 8083
-    LISTEN_PORT_GRPC: int = 8084
+    # In github actions, the port 8084 is already used by mono process.
+    LISTEN_PORT_GRPC: int = 8085
     ECU_INFO_YAML: Path = TEST_DIR / "ecu_info.yaml"
     # remember to disable config file monitor
     EXIT_ON_CONFIG_FILE_CHANGED: bool = False
