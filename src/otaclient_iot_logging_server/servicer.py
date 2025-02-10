@@ -25,10 +25,13 @@ from aiohttp.web import Request
 
 from otaclient_iot_logging_server._common import LogMessage, LogsQueue
 from otaclient_iot_logging_server.ecu_info import ECUInfo
-from otaclient_iot_logging_server.v1.types import (
+from otaclient_iot_logging_server.v1._types import (
     ErrorCode,
+    HealthCheckResponse,
+    LogLevel,
     PutLogRequest,
     PutLogResponse,
+    ServiceStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -56,7 +59,13 @@ class OTAClientIoTLoggingServerServicer:
                 "no ecu_info.yaml presented, logging upload filtering is DISABLED"
             )
 
-    async def put_log(self, ecu_id, message):
+    async def _put_log(
+        self,
+        ecu_id: str,
+        timestamp: int = None,
+        level: LogLevel = LogLevel.UNSPECIFIC,
+        message: str = "",
+    ) -> ErrorCode:
         """
         Put log message into queue.
 
@@ -69,9 +78,10 @@ class OTAClientIoTLoggingServerServicer:
         if self._allowed_ecus and ecu_id not in self._allowed_ecus:
             return ErrorCode.NOT_ALLOWED_ECU_ID
 
-        _timestamp = (int(time.time()) * 1000,)  # milliseconds
+        if timestamp is None:
+            timestamp = (int(time.time()) * 1000,)  # milliseconds
         _logging_msg = LogMessage(
-            timestamp=_timestamp,
+            timestamp=timestamp,
             message=message,
         )
         # logger.debug(f"receive log from {ecu_id}: {_logging_msg}")
@@ -83,14 +93,14 @@ class OTAClientIoTLoggingServerServicer:
 
         return ErrorCode.NO_FAILURE
 
-    async def put_log_http(self, request: Request) -> PutLogResponse:
+    async def http_put_log(self, request: Request) -> PutLogResponse:
         """
         put log message from HTTP POST request.
         """
         _ecu_id = request.match_info["ecu_id"]
         _message = await request.text()
 
-        _code = await self.put_log(_ecu_id, _message)
+        _code = await self._put_log(ecu_id=_ecu_id, message=_message)
 
         if _code == ErrorCode.NO_MESSAGE or _code == ErrorCode.NOT_ALLOWED_ECU_ID:
             _status = HTTPStatus.BAD_REQUEST
@@ -101,12 +111,23 @@ class OTAClientIoTLoggingServerServicer:
 
         return web.Response(status=_status)
 
-    async def put_log_grpc(self, request: PutLogRequest) -> PutLogResponse:
+    async def grpc_check(self, service: str) -> HealthCheckResponse:
+        """
+        check the service status from gRPC request
+        """
+        # always return SERVING status
+        return HealthCheckResponse(status=ServiceStatus.SERVING)
+
+    async def grpc_put_log(self, request: PutLogRequest) -> PutLogResponse:
         """
         put log message from gRPC request
         """
         _ecu_id = request.ecu_id
+        _timestamp = request.timestamp
+        _level = request.level
         _message = request.message
 
-        _code = await self.put_log(_ecu_id, _message)
+        _code = await self._put_log(
+            ecu_id=_ecu_id, timestamp=_timestamp, level=_level, message=_message
+        )
         return PutLogResponse(code=_code)

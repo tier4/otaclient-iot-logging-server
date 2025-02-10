@@ -34,7 +34,7 @@ from otaclient_iot_logging_server.servicer import OTAClientIoTLoggingServerServi
 from otaclient_iot_logging_server.v1 import (
     otaclient_iot_logging_server_v1_pb2_grpc as v1_grpc,
 )
-from otaclient_iot_logging_server.v1.api_stub import OtaClientIoTLoggingServiceV1
+from otaclient_iot_logging_server.v1.api_stub import OTAClientIoTLoggingServiceV1
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ def launch_server(queue: LogsQueue) -> None:
     async def _http_server_launcher():
         handler = OTAClientIoTLoggingServerServicer(ecu_info=ecu_info, queue=queue)
         app = web.Application()
-        app.add_routes([web.post(r"/{ecu_id}", handler.put_log_http)])
+        app.add_routes([web.post(r"/{ecu_id}", handler.http_put_log)])
 
         # typing: run_app is a NoReturn method, unless received signal
         web.run_app(
@@ -80,10 +80,10 @@ def launch_server(queue: LogsQueue) -> None:
             ecu_info=ecu_info,
             queue=queue,
         )
-        otaclient_iot_logging_service_v1 = OtaClientIoTLoggingServiceV1(servicer)
+        otaclient_iot_logging_service_v1 = OTAClientIoTLoggingServiceV1(servicer)
 
         server = grpc.aio.server(thread_name_prefix=thread_pool)
-        v1_grpc.add_OtaClientIoTLoggingServiceServicer_to_server(
+        v1_grpc.add_OTAClientIoTLoggingServiceServicer_to_server(
             server=server, servicer=otaclient_iot_logging_service_v1
         )
         server.add_insecure_port(

@@ -17,17 +17,25 @@ from __future__ import annotations
 
 from typing import Any
 
+from otaclient_iot_logging_server.v1 import _types
 from otaclient_iot_logging_server.v1 import otaclient_iot_logging_server_v1_pb2 as pb2
 from otaclient_iot_logging_server.v1 import (
     otaclient_iot_logging_server_v1_pb2_grpc as pb2_grpc,
 )
-from otaclient_iot_logging_server.v1 import types
 
 
-class OtaClientIoTLoggingServiceV1(pb2_grpc.OtaClientIoTLoggingServiceServicer):
+class OTAClientIoTLoggingServiceV1(pb2_grpc.OTAClientIoTLoggingServiceServicer):
     def __init__(self, otaclient_iot_logging_server_stub: Any):
         self._stub = otaclient_iot_logging_server_stub
 
+    async def Check(
+        self, request: pb2.HealthCheckRequest, context
+    ) -> pb2.HealthCheckResponse:
+        response = await self._stub.grpc_check(
+            _types.HealthCheckRequest.convert(request)
+        )
+        return response.export_pb()
+
     async def PutLog(self, request: pb2.PutLogRequest, context) -> pb2.PutLogResponse:
-        response = await self._stub.put_log_grpc(types.PutLogRequest.convert(request))
+        response = await self._stub.grpc_put_log(_types.PutLogRequest.convert(request))
         return response.export_pb()

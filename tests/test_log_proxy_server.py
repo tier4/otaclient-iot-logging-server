@@ -35,12 +35,12 @@ import otaclient_iot_logging_server.log_proxy_server as log_server_module
 from otaclient_iot_logging_server._common import LogsQueue
 from otaclient_iot_logging_server.ecu_info import parse_ecu_info
 from otaclient_iot_logging_server.servicer import OTAClientIoTLoggingServerServicer
+from otaclient_iot_logging_server.v1 import _types
 from otaclient_iot_logging_server.v1 import otaclient_iot_logging_server_v1_pb2 as pb2
 from otaclient_iot_logging_server.v1 import (
     otaclient_iot_logging_server_v1_pb2_grpc as v1_grpc,
 )
-from otaclient_iot_logging_server.v1 import types
-from otaclient_iot_logging_server.v1.api_stub import OtaClientIoTLoggingServiceV1
+from otaclient_iot_logging_server.v1.api_stub import OTAClientIoTLoggingServiceV1
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,9 @@ _test_server_cfg = _ServerConfig()
 @dataclass
 class MessageEntry:
     ecu_id: str
-    log_type: types.LogType
+    log_type: _types.LogType
+    timestamp: int
+    level: _types.LogLevel
     message: str
 
 
@@ -82,9 +84,11 @@ def generate_random_msgs(
     _res: list[MessageEntry] = []
     for _ in range(msg_num):
         _ecu_id, *_ = random.sample(ecus_list, 1)
-        _log_type = random.choice(list(types.LogType))
+        _log_type = random.choice(list(_types.LogType))
+        _timestamp = random.randint(0, 2**32)
+        _level = random.choice(list(_types.LogLevel))
         _message = os.urandom(msg_len).hex()
-        _res.append(MessageEntry(_ecu_id, _log_type, _message))
+        _res.append(MessageEntry(_ecu_id, _log_type, _timestamp, _level, _message))
     return _res
 
 
@@ -121,7 +125,7 @@ class TestLogProxyServer:
         aiohttp_server_logger = logging.getLogger("aiohttp")
         aiohttp_server_logger.setLevel("ERROR")
         # add handler to the server
-        app.add_routes([web.post(r"/{ecu_id}", handler.put_log_http)])
+        app.add_routes([web.post(r"/{ecu_id}", handler.http_put_log)])
         # star the server
         runner = web.AppRunner(app)
         try:
@@ -159,8 +163,8 @@ class TestLogProxyServer:
         )
 
         server = grpc.aio.server()
-        v1_grpc.add_OtaClientIoTLoggingServiceServicer_to_server(
-            servicer=OtaClientIoTLoggingServiceV1(servicer), server=server
+        v1_grpc.add_OTAClientIoTLoggingServiceServicer_to_server(
+            servicer=OTAClientIoTLoggingServiceV1(servicer), server=server
         )
         server.add_insecure_port(self.SERVER_URL_GRPC)
         try:
@@ -216,23 +220,36 @@ class TestLogProxyServer:
                 pass  # raise_for_status is set on session
         assert exc_info.value.status == HTTPStatus.BAD_REQUEST
 
-    async def test_grpc_server(self, launch_grpc_server):
+    @pytest.mark.parametrize(
+        "_service",
+        ["", "OTAClientIoTLoggingService"],
+    )
+    async def test_grpc_server_check(self, _service: str, launch_grpc_server):
+        _req = pb2.HealthCheckRequest(service=_service)
+        async with grpc.aio.insecure_channel(self.SERVER_URL_GRPC) as channel:
+            stub = v1_grpc.OTAClientIoTLoggingServiceStub(channel)
+            _response = await stub.Check(_req)
+            assert _response.status == pb2.HealthCheckResponse.SERVING
+
+    async def test_grpc_server_put_log(self, launch_grpc_server):
         # ------ execution ------ #
         logger.info(f"sending {self.TOTAL_MSG_NUM} msgs to {self.SERVER_URL_GRPC}...")
 
-        async def send_msg(item):
+        async def send_put_log_msg(item):
             _req = pb2.PutLogRequest(
                 ecu_id=item.ecu_id,
                 log_type=item.log_type,
+                timestamp=item.timestamp,
+                level=item.level,
                 message=item.message,
             )
             async with grpc.aio.insecure_channel(self.SERVER_URL_GRPC) as channel:
-                stub = v1_grpc.OtaClientIoTLoggingServiceStub(channel)
+                stub = v1_grpc.OTAClientIoTLoggingServiceStub(channel)
                 _response = await stub.PutLog(_req)
                 assert _response.code == pb2.ErrorCode.NO_FAILURE
 
         for item in self._msgs:
-            await send_msg(item)
+            await send_put_log_msg(item)
 
         # ------ check result ------ #
         # ensure the all msgs are sent in order to the queue by the server.
@@ -252,7 +269,7 @@ class TestLogProxyServer:
             message="valid_msg",
         )
         async with grpc.aio.insecure_channel(self.SERVER_URL_GRPC) as channel:
-            stub = v1_grpc.OtaClientIoTLoggingServiceStub(channel)
+            stub = v1_grpc.OTAClientIoTLoggingServiceStub(channel)
             _response = await stub.PutLog(_req)
             assert _response.code == pb2.ErrorCode.NOT_ALLOWED_ECU_ID
 
@@ -262,6 +279,6 @@ class TestLogProxyServer:
             message="",
         )
         async with grpc.aio.insecure_channel(self.SERVER_URL_GRPC) as channel:
-            stub = v1_grpc.OtaClientIoTLoggingServiceStub(channel)
+            stub = v1_grpc.OTAClientIoTLoggingServiceStub(channel)
             _response = await stub.PutLog(_req)
             assert _response.code == pb2.ErrorCode.NO_MESSAGE
