@@ -106,6 +106,7 @@ class TestLogProxyServer:
         self._ecu_info = parse_ecu_info(TEST_DIR / "ecu_info.yaml")
         mocker.patch(f"{MODULE}.ecu_info", self._ecu_info)
 
+    @pytest.mark.asyncio
     @pytest.fixture
     async def launch_http_server(self, mocker: MockerFixture, mock_ecu_info):
         """
@@ -139,6 +140,7 @@ class TestLogProxyServer:
         finally:
             await runner.cleanup()
 
+    @pytest.mark.asyncio
     @pytest.fixture
     async def http_client_sesion(self):
         client_session = aiohttp.ClientSession(
@@ -150,6 +152,7 @@ class TestLogProxyServer:
         finally:
             await client_session.close()
 
+    @pytest.mark.asyncio
     @pytest.fixture
     async def launch_grpc_server(self, mocker: MockerFixture, mock_ecu_info):
         mocker.patch(f"{MODULE}.server_cfg", _test_server_cfg)
@@ -172,6 +175,7 @@ class TestLogProxyServer:
             yield
         finally:
             await server.stop(None)
+            await server.wait_for_termination()
 
     @pytest.fixture(autouse=True)
     def prepare_test_data(self):
