@@ -39,6 +39,7 @@ class _ServerCfg:
     SERVER_LOGSTREAM_SUFFIX: str = "test_suffix"
     LISTEN_ADDRESS: str = "172.16.1.1"
     LISTEN_PORT: int = 1234
+    LISTEN_PORT_GRPC: int = 4321
     MAX_LOGS_PER_MERGE: int = 123
     MAX_LOGS_BACKLOG: int = 1234
     UPLOAD_INTERVAL: int = 12
@@ -84,7 +85,11 @@ def test_main(
 
     # check __main__.main source code for more details
     assert (
+        caplog.records[-3].msg
+        == f"launching HTTP iot_logging_server({_version}) at http://{_in_server_cfg.LISTEN_ADDRESS}:{_in_server_cfg.LISTEN_PORT}"
+    )
+    assert (
         caplog.records[-2].msg
-        == f"launching iot_logging_server({_version}) at http://{_in_server_cfg.LISTEN_ADDRESS}:{_in_server_cfg.LISTEN_PORT}"
+        == f"launching gRPC iot_logging_server({_version}) at http://{_in_server_cfg.LISTEN_ADDRESS}:{_in_server_cfg.LISTEN_PORT_GRPC}"
     )
     assert (caplog.records[-1].msg) == f"iot_logging_server config: \n{_in_server_cfg}"

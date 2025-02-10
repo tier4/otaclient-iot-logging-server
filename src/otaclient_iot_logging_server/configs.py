@@ -41,6 +41,7 @@ class ConfigurableLoggingServerConfig(BaseSettings):
 
     LISTEN_ADDRESS: str = "127.0.0.1"
     LISTEN_PORT: int = 8083
+    LISTEN_PORT_GRPC: int = 8084
     UPLOAD_LOGGING_SERVER_LOGS: bool = False
     SERVER_LOGSTREAM_SUFFIX: str = "iot_logging_server"
     SERVER_LOGGING_LEVEL: _LoggingLevelName = "INFO"
