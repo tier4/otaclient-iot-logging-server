@@ -79,7 +79,7 @@ class OTAClientIoTLoggingServerServicer:
             return ErrorCode.NOT_ALLOWED_ECU_ID
 
         if timestamp is None:
-            timestamp = (int(time.time()) * 1000,)  # milliseconds
+            timestamp = int(time.time()) * 1000  # milliseconds
         _logging_msg = LogMessage(
             timestamp=timestamp,
             message=message,
