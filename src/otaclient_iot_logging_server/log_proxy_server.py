@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 WAIT_BEFORE_SEND_READY_MSG = 2  # seconds
 
+
 async def _start_http_server(queue: LogsQueue):
     handler = OTAClientIoTLoggingServerServicer(ecu_info=ecu_info, queue=queue)
     app = web.Application()
@@ -48,12 +49,17 @@ async def _start_http_server(queue: LogsQueue):
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT)
+    site = web.TCPSite(
+        runner, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT
+    )
     try:
         await site.start()
-        logger.info(f"HTTP server started at {server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}")
+        logger.info(
+            f"HTTP server started at {server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
+        )
     except Exception as e:
         logger.error(f"Failed to start HTTP server: {e}")
+
 
 async def _start_grpc_server(queue: LogsQueue):
     thread_pool = ThreadPoolExecutor(
@@ -83,11 +89,13 @@ async def _start_grpc_server(queue: LogsQueue):
         await server.stop(1)
         thread_pool.shutdown(wait=True)
 
+
 async def _start_server(queue: LogsQueue):
     await asyncio.gather(
         _start_http_server(queue),
         _start_grpc_server(queue),
     )
+
 
 def launch_server(queue: LogsQueue) -> None:
     loop = asyncio.new_event_loop()
