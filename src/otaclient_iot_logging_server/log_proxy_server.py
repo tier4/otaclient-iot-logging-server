@@ -42,8 +42,7 @@ logger = logging.getLogger(__name__)
 WAIT_BEFORE_SEND_READY_MSG = 2  # seconds
 
 
-async def _start_http_server(queue: LogsQueue):
-    handler = OTAClientIoTLoggingServerServicer(ecu_info=ecu_info, queue=queue)
+async def _start_http_server(handler: OTAClientIoTLoggingServerServicer):
     app = web.Application()
     app.add_routes([web.post(r"/{ecu_id}", handler.http_put_log)])
 
@@ -61,15 +60,11 @@ async def _start_http_server(queue: LogsQueue):
         logger.error(f"Failed to start HTTP server: {e}")
 
 
-async def _start_grpc_server(queue: LogsQueue):
+async def _start_grpc_server(handler: OTAClientIoTLoggingServerServicer):
     thread_pool = ThreadPoolExecutor(
         thread_name_prefix="otaclient_iot_logging_server",
     )
-    servicer = OTAClientIoTLoggingServerServicer(
-        ecu_info=ecu_info,
-        queue=queue,
-    )
-    otaclient_iot_logging_service_v1 = OTAClientIoTLoggingServiceV1(servicer)
+    otaclient_iot_logging_service_v1 = OTAClientIoTLoggingServiceV1(handler)
 
     server = grpc.aio.server(migration_thread_pool=thread_pool)
     v1_grpc.add_OTAClientIoTLoggingServiceServicer_to_server(
@@ -91,9 +86,10 @@ async def _start_grpc_server(queue: LogsQueue):
 
 
 async def _start_server(queue: LogsQueue):
+    handler = OTAClientIoTLoggingServerServicer(ecu_info=ecu_info, queue=queue)
     await asyncio.gather(
-        _start_http_server(queue),
-        _start_grpc_server(queue),
+        _start_http_server(handler),
+        _start_grpc_server(handler),
     )
 
 
