@@ -35,6 +35,7 @@ The behaviors of the iot_logging_server can be configured with the following env
 | ECU_INFO_YAML | `/boot/ota/ecu_info.yaml` | The location of ecu_info.yaml config file. iot-logger server will parse the config file and only process logs sending from known ECUs.|
 | LISTEN_ADDRESS | `127.0.0.1` | The IP address iot-logger server listen on. By default only receive logs from local machine. |
 | LISTEN_PORT | `8083` | |
+| LISTEN_PORT_GRPC | `8084` | |
 | UPLOAD_LOGGING_SERVER_LOGS | `false` | Whether to upload the logs from server itself to cloudwatchlogs. |
 | SERVER_LOGSTREAM_SUFFIX | `iot_logging_server` | log_stream suffix for local server logs on cloudwatchlogs if uploaded. |
 | SERVER_LOGGING_LEVEL | `INFO` | The logging level of the server itself. |

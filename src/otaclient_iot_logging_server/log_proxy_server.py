@@ -17,14 +17,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
-from http import HTTPStatus
-from queue import Full, Queue
+from concurrent.futures import ThreadPoolExecutor
 
+import grpc.aio
 from aiohttp import web
-from aiohttp.web import Request
 
-from otaclient_iot_logging_server._common import LogMessage, LogsQueue
+from otaclient_iot_logging_server._common import LogsQueue
 from otaclient_iot_logging_server._sd_notify import (
     READY_MSG,
     sd_notify,
@@ -32,64 +30,72 @@ from otaclient_iot_logging_server._sd_notify import (
 )
 from otaclient_iot_logging_server.configs import server_cfg
 from otaclient_iot_logging_server.ecu_info import ecu_info
+from otaclient_iot_logging_server.servicer import OTAClientIoTLoggingServerServicer
+from otaclient_iot_logging_server.v1 import (
+    otaclient_iot_logging_server_v1_pb2_grpc as v1_grpc,
+)
+from otaclient_iot_logging_server.v1.api_stub import OTAClientIoTLoggingServiceV1
 
 logger = logging.getLogger(__name__)
-
-
-class LoggingPostHandler:
-    """A simple aiohttp server handler that receives logs from otaclient."""
-
-    def __init__(self, queue: LogsQueue) -> None:
-        self._queue = queue
-        self._allowed_ecus = None
-
-        if ecu_info:
-            self._allowed_ecus = ecu_info.ecu_id_set
-            logger.info(
-                f"setup allowed_ecu_id from ecu_info.yaml: {ecu_info.ecu_id_set}"
-            )
-        else:
-            logger.warning(
-                "no ecu_info.yaml presented, logging upload filtering is DISABLED"
-            )
-
-    # route: POST /{ecu_id}
-    async def logging_post_handler(self, request: Request):
-        """
-        NOTE: use <ecu_id> as log_stream_suffix, each ECU has its own
-              logging stream for uploading.
-        """
-        _ecu_id = request.match_info["ecu_id"]
-        _raw_logging = await request.text()
-        _allowed_ecus = self._allowed_ecus
-        # don't allow empty request or unknowned ECUs
-        # if ECU id is unknown(not listed in ecu_info.yaml), drop this log.
-        if not _raw_logging or (_allowed_ecus and _ecu_id not in _allowed_ecus):
-            return web.Response(status=HTTPStatus.BAD_REQUEST)
-
-        _logging_msg = LogMessage(
-            timestamp=int(time.time()) * 1000,  # milliseconds
-            message=_raw_logging,
-        )
-        # logger.debug(f"receive log from {_ecu_id}: {_logging_msg}")
-        try:
-            self._queue.put_nowait((_ecu_id, _logging_msg))
-        except Full:
-            logger.debug(f"message dropped: {_logging_msg}")
-            return web.Response(status=HTTPStatus.SERVICE_UNAVAILABLE)
-
-        return web.Response(status=HTTPStatus.OK)
 
 
 WAIT_BEFORE_SEND_READY_MSG = 2  # seconds
 
 
-def launch_server(queue: Queue[tuple[str, LogMessage]]) -> None:
-    handler = LoggingPostHandler(queue=queue)
+async def _start_http_server(handler: OTAClientIoTLoggingServerServicer):
     app = web.Application()
-    app.add_routes([web.post(r"/{ecu_id}", handler.logging_post_handler)])
+    app.add_routes([web.post(r"/{ecu_id}", handler.http_put_log)])
 
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(
+        runner, host=server_cfg.LISTEN_ADDRESS, port=server_cfg.LISTEN_PORT
+    )
+    try:
+        await site.start()
+        logger.info(
+            f"HTTP server started at {server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT}"
+        )
+    except Exception as e:
+        logger.error(f"Failed to start HTTP server: {e}")
+
+
+async def _start_grpc_server(handler: OTAClientIoTLoggingServerServicer):
+    thread_pool = ThreadPoolExecutor(
+        thread_name_prefix="otaclient_iot_logging_server",
+    )
+    otaclient_iot_logging_service_v1 = OTAClientIoTLoggingServiceV1(handler)
+
+    server = grpc.aio.server(migration_thread_pool=thread_pool)
+    v1_grpc.add_OTAClientIoTLoggingServiceServicer_to_server(
+        server=server, servicer=otaclient_iot_logging_service_v1
+    )
+    server.add_insecure_port(
+        f"{server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT_GRPC}"
+    )
+    logger.info(
+        f"launch grpc server at {server_cfg.LISTEN_ADDRESS}:{server_cfg.LISTEN_PORT_GRPC}"
+    )
+
+    await server.start()
+    try:
+        await server.wait_for_termination()
+    finally:
+        await server.stop(1)
+        thread_pool.shutdown(wait=True)
+
+
+async def _start_server(queue: LogsQueue):
+    handler = OTAClientIoTLoggingServerServicer(ecu_info=ecu_info, queue=queue)
+    await asyncio.gather(
+        _start_http_server(handler),
+        _start_grpc_server(handler),
+    )
+
+
+def launch_server(queue: LogsQueue) -> None:
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
     if sd_notify_enabled():
         logger.info(
@@ -102,10 +108,5 @@ def launch_server(queue: Queue[tuple[str, LogMessage]]) -> None:
             sd_notify,
             READY_MSG,
         )
-    # typing: run_app is a NoReturn method, unless received signal
-    web.run_app(
-        app,
-        host=server_cfg.LISTEN_ADDRESS,
-        port=server_cfg.LISTEN_PORT,
-        loop=loop,
-    )  # type: ignore
+
+    loop.run_until_complete(_start_server(queue))

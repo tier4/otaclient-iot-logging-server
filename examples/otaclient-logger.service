@@ -6,7 +6,8 @@ After=network-online.target nss-lookup.target
 [Service]
 ExecStart=/opt/ota/iot_logger/venv/bin/iot_logging_server
 Environment=LISTEN_ADDRESS=127.0.0.1
-Environment=LISTEN_ADDRESS=8083
+Environment=LISTEN_PORT=8083
+Environment=LISTEN_PORT_GRPC=8084
 Environment=UPLOAD_LOGGING_SERVER_LOGS=true
 Environment=SERVER_LOGGING_LEVEL=INFO
 Restart=on-failure
