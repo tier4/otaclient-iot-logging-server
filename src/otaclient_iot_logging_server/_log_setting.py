@@ -18,10 +18,9 @@ from __future__ import annotations
 import contextlib
 import logging
 import time
-from queue import Queue
 
 from otaclient_iot_logging_server import package_name as root_package_name
-from otaclient_iot_logging_server._common import LogMessage
+from otaclient_iot_logging_server._common import LogGroupType, LogMessage, LogsQueue
 from otaclient_iot_logging_server.configs import server_cfg
 
 
@@ -30,7 +29,7 @@ class _LogTeeHandler(logging.Handler):
 
     def __init__(
         self,
-        queue: Queue[tuple[str, LogMessage]],
+        queue: LogsQueue,
         logstream_suffix: str,
     ) -> None:
         super().__init__()
@@ -41,6 +40,7 @@ class _LogTeeHandler(logging.Handler):
         with contextlib.suppress(Exception):
             self._queue.put_nowait(
                 (
+                    LogGroupType.LOG,  # always put local log into log group
                     self._logstream_suffix,
                     LogMessage(
                         timestamp=int(time.time()) * 1000,  # milliseconds
@@ -51,7 +51,7 @@ class _LogTeeHandler(logging.Handler):
 
 
 def config_logging(
-    queue: Queue[tuple[str, LogMessage]],
+    queue: LogsQueue,
     *,
     log_format: str,
     level: str,

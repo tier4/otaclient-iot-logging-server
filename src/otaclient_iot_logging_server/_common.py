@@ -15,12 +15,19 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from queue import Queue
 from typing import Literal, TypedDict
 
 from typing_extensions import NotRequired, TypeAlias
 
-LogsQueue: TypeAlias = "Queue[tuple[str, LogMessage]]"
+# LogQueue is a queue of LogGroupType, ecu_id, and LogMessage
+LogsQueue: TypeAlias = "Queue[tuple[LogGroupType, str, LogMessage]]"
+
+
+class LogGroupType(Enum):
+    LOG = "LOG"
+    METRICS = "METRICS"
 
 
 class LogMessage(TypedDict):

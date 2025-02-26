@@ -239,6 +239,14 @@ class IoTSessionConfig(FixedConfig):
 
     @computed_field
     @property
+    def aws_cloudwatch_metrics_log_group(self) -> str:
+        return (
+            f"/aws/greengrass/edge/{self.region}/"
+            f"{self.account_id}/{self.profile}-edge-otaclient-metrics"
+        )
+
+    @computed_field
+    @property
     def aws_credential_refresh_url(self) -> str:
         """The endpoint to refresh token from."""
         return urljoin(

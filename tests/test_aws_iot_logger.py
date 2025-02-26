@@ -28,7 +28,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.aws_iot_logger
-from otaclient_iot_logging_server._common import LogMessage, LogsQueue
+from otaclient_iot_logging_server._common import LogGroupType, LogMessage, LogsQueue
 from otaclient_iot_logging_server.aws_iot_logger import (
     AWSIoTLogger,
     get_log_stream_name,
@@ -76,10 +76,13 @@ def generate_random_msgs(
 ) -> list[tuple[str, LogMessage]]:
     _res: list[tuple[str, LogMessage]] = []
     for _ in range(msg_num):
-        _ecu, *_ = random.sample(ecus_list, 1)
+        _ecu_id, *_ = random.sample(ecus_list, 1)
+        _log_group_type = random.choice(list(LogGroupType))
         _msg = os.urandom(msg_len).hex()
         _timestamp = int(time.time()) * 1000  # milliseconds
-        _res.append((_ecu, LogMessage(timestamp=_timestamp, message=_msg)))
+        _res.append(
+            (_log_group_type, _ecu_id, LogMessage(timestamp=_timestamp, message=_msg))
+        )
     return _res
 
 
@@ -90,16 +93,27 @@ class TestAWSIoTLogger:
     class _TestFinished(Exception):
         pass
 
-    def _mocked_put_log_events(self, _ecu_id: str, _logs: list[LogMessage]):
-        self._test_result[_ecu_id] = _logs
+    def _mocked_put_log_events(
+        self, _log_group_name: str, _ecu_id: str, _logs: list[LogMessage]
+    ):
+        self._test_result[(_log_group_name, _ecu_id)] = _logs
 
     @pytest.fixture
     def prepare_test_data(self):
+        self._log_group_name = "some_log_group_name"  # place holder
+        self._metrics_group_name = "some_metrics_group_name"  # place holder
+
         _msgs = generate_random_msgs(self.MSG_LEN, self.MSG_NUM)
         # prepare result for test_thread_main
-        _merged_msgs: dict[str, list[LogMessage]] = defaultdict(list)
-        for _ecu_id, _log_msg in _msgs:
-            _merged_msgs[_ecu_id].append(_log_msg)
+        _merged_msgs: dict[(LogGroupType, str), list[LogMessage]] = defaultdict(list)
+        for _log_group_type, _ecu_id, _log_msg in _msgs:
+            # get the log_group_name based on the log_group_type
+            _log_group_name = (
+                self._metrics_group_name
+                if _log_group_type == LogGroupType.METRICS
+                else self._log_group_name
+            )
+            _merged_msgs[(_log_group_name, _ecu_id)].append(_log_msg)
         self._merged_msgs = _merged_msgs
         # prepare the queue for test
         _queue: LogsQueue = Queue()
@@ -123,7 +137,7 @@ class TestAWSIoTLogger:
         self._session_config = mocker.MagicMock()  # place holder
         # for holding test results
         # mocked_send_messages will record each calls in this dict
-        self._test_result: dict[str, list[LogMessage]] = {}
+        self._test_result: dict[(LogGroupType, str), list[LogMessage]] = {}
         # mock get_log_stream_name to let it returns the log_stream_suffix
         # as it, make the test easier.
         # see get_log_stream_name signature for more details
@@ -132,8 +146,8 @@ class TestAWSIoTLogger:
 
     def test_thread_main(self, mocker: MockerFixture):
         func_to_test = AWSIoTLogger.thread_main
-        self._create_log_group = mocked__create_log_group = mocker.MagicMock(
-            spec=AWSIoTLogger._create_log_group
+        self._create_log_groups = mocked__create_log_groups = mocker.MagicMock(
+            spec=AWSIoTLogger._create_log_groups
         )
 
         # ------ execution ------ #
@@ -142,6 +156,6 @@ class TestAWSIoTLogger:
         logger.info("execution finished")
 
         # ------ check result ------ #
-        mocked__create_log_group.assert_called_once()
+        mocked__create_log_groups.assert_called_once()
         # confirm the send_messages mock receives the expecting calls.
         assert self._merged_msgs == self._test_result

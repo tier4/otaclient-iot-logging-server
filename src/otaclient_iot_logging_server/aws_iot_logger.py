@@ -26,7 +26,12 @@ from threading import Thread
 import awscrt.exceptions
 from typing_extensions import NoReturn
 
-from otaclient_iot_logging_server._common import LogEvent, LogMessage, LogsQueue
+from otaclient_iot_logging_server._common import (
+    LogEvent,
+    LogGroupType,
+    LogMessage,
+    LogsQueue,
+)
 from otaclient_iot_logging_server._utils import retry
 from otaclient_iot_logging_server.boto3_session import get_session
 from otaclient_iot_logging_server.configs import server_cfg
@@ -68,6 +73,7 @@ class AWSIoTLogger:
 
         self._session_config = session_config
         self._log_group_name = session_config.aws_cloudwatch_log_group
+        self._metrics_group_name = session_config.aws_cloudwatch_metrics_log_group
         self._interval = interval
         self._queue: LogsQueue = queue
         # NOTE: add this limitation to ensure all of the log_streams in a merge
@@ -75,33 +81,37 @@ class AWSIoTLogger:
         self._max_logs_per_merge = min(max_logs_per_merge, self.MAX_LOGS_PER_PUT)
 
     @retry(max_retry=16, backoff_factor=2, backoff_max=32)
-    def _create_log_group(self):
+    def _create_log_groups(self):
         # TODO: (20240214) should we let the edge side iot_logging_server
         #       create the log group?
-        log_group_name, client = self._log_group_name, self._client
+        log_group_names = [self._log_group_name, self._metrics_group_name]
+        client = self._client
         exc_types = self._exc_types
-        try:
-            client.create_log_group(logGroupName=log_group_name)
-            logger.info(f"{log_group_name=} has been created")
-        except exc_types.ResourceAlreadyExistsException as e:
-            logger.debug(
-                f"{log_group_name=} already existed, skip creating: {e.response}"
-            )
-        except ValueError as e:
-            if e.__cause__ and isinstance(e.__cause__, awscrt.exceptions.AwsCrtError):
-                logger.error(
-                    (f"failed to create mtls connection to remote: {e.__cause__}")
+        for log_group_name in log_group_names:
+            try:
+                client.create_log_group(logGroupName=log_group_name)
+                logger.info(f"{log_group_name=} has been created")
+            except exc_types.ResourceAlreadyExistsException as e:
+                logger.debug(
+                    f"{log_group_name=} already existed, skip creating: {e.response}"
                 )
-                raise e.__cause__ from None
-            logger.error(f"failed to create {log_group_name=}: {e!r}")
-            raise
-        except Exception as e:
-            logger.error(f"failed to create {log_group_name=}: {e!r}")
-            raise
+            except ValueError as e:
+                if e.__cause__ and isinstance(
+                    e.__cause__, awscrt.exceptions.AwsCrtError
+                ):
+                    logger.error(
+                        (f"failed to create mtls connection to remote: {e.__cause__}")
+                    )
+                    raise e.__cause__ from None
+                logger.error(f"failed to create {log_group_name=}: {e!r}")
+                raise
+            except Exception as e:
+                logger.error(f"failed to create {log_group_name=}: {e!r}")
+                raise
 
     @retry(max_retry=16, backoff_factor=2, backoff_max=32)
-    def _create_log_stream(self, log_stream_name: str):
-        log_group_name, client = self._log_group_name, self._client
+    def _create_log_stream(self, log_group_name: str, log_stream_name: str):
+        client = self._client
         exc_types = self._exc_types
         try:
             client.create_log_stream(
@@ -126,7 +136,9 @@ class AWSIoTLogger:
             raise
 
     @retry(backoff_factor=2)
-    def put_log_events(self, log_stream_name: str, message_list: list[LogMessage]):
+    def put_log_events(
+        self, log_group_name: str, log_stream_name: str, message_list: list[LogMessage]
+    ):
         """
         Ref:
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs/client/put_log_events.html
@@ -137,7 +149,7 @@ class AWSIoTLogger:
             See the documentation for more details.
         """
         request = LogEvent(
-            logGroupName=self._log_group_name,
+            logGroupName=log_group_name,
             logStreamName=log_stream_name,
             logEvents=message_list,
         )
@@ -148,7 +160,7 @@ class AWSIoTLogger:
             # logger.debug(f"successfully uploaded: {response}")
         except exc_types.ResourceNotFoundException as e:
             logger.debug(f"{log_stream_name=} not found: {e!r}")
-            self._create_log_stream(log_stream_name)
+            self._create_log_stream(log_group_name, log_stream_name)
             raise
         except Exception as e:
             # NOTE: for unhandled exception, we just log it and ignore,
@@ -156,36 +168,46 @@ class AWSIoTLogger:
             #       in the future!
             logger.error(
                 f"put_log_events failure: {e!r}\n"
-                f"log_group_name={self._log_group_name}, \n"
+                f"log_group_name={log_group_name}, \n"
                 f"log_stream_name={log_stream_name}"
             )
 
     def thread_main(self) -> NoReturn:
         """Main entry for running this iot_logger in a thread."""
         # unconditionally create log_group and log_stream, do nothing if existed.
-        self._create_log_group()
+        self._create_log_groups()
 
         while True:
             # merge LogMessages into the same source, identified by
-            # log_stream_suffix.
-            message_dict: dict[str, list[LogMessage]] = defaultdict(list)
+            # log_group_type and log_stream_suffix.
+            message_dict: dict[(LogGroupType, str), list[LogMessage]] = defaultdict(
+                list
+            )
 
             _merge_count = 0
             while _merge_count < self._max_logs_per_merge:
                 _queue = self._queue
                 try:
-                    log_stream_suffix, message = _queue.get_nowait()
+                    log_group_type, log_stream_suffix, message = _queue.get_nowait()
                     _merge_count += 1
-
-                    message_dict[log_stream_suffix].append(message)
+                    message_dict[(log_group_type, log_stream_suffix)].append(message)
                 except Empty:
                     break
 
-            for log_stream_suffix, logs in message_dict.items():
+            for (log_group_type, log_stream_suffix), logs in message_dict.items():
+                # get the log_group_name based on the log_group_type
+                log_group_name = (
+                    self._metrics_group_name
+                    if log_group_type == LogGroupType.METRICS
+                    else self._log_group_name
+                )
+
                 with contextlib.suppress(Exception):
                     self.put_log_events(
+                        log_group_name,
                         get_log_stream_name(
-                            self._session_config.thing_name, log_stream_suffix
+                            self._session_config.thing_name,
+                            log_stream_suffix,
                         ),
                         logs,
                     )

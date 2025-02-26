@@ -23,12 +23,13 @@ from queue import Full
 from aiohttp import web
 from aiohttp.web import Request
 
-from otaclient_iot_logging_server._common import LogMessage, LogsQueue
+from otaclient_iot_logging_server._common import LogGroupType, LogMessage, LogsQueue
 from otaclient_iot_logging_server.ecu_info import ECUInfo
 from otaclient_iot_logging_server.v1._types import (
     ErrorCode,
     HealthCheckResponse,
     LogLevel,
+    LogType,
     PutLogRequest,
     PutLogResponse,
     ServiceStatus,
@@ -59,9 +60,18 @@ class OTAClientIoTLoggingServerServicer:
                 "no ecu_info.yaml presented, logging upload filtering is DISABLED"
             )
 
+    def convert_from_log_type_to_log_group_type(self, log_type):
+        """
+        Convert input log type to log group type
+        """
+        if log_type == LogType.METRICS:
+            return LogGroupType.METRICS
+        return LogGroupType.LOG
+
     async def _put_log(
         self,
         ecu_id: str,
+        log_type: LogType = LogType.LOG,
         timestamp: int = None,
         level: LogLevel = LogLevel.UNSPECIFIC,
         message: str = "",
@@ -78,6 +88,7 @@ class OTAClientIoTLoggingServerServicer:
         if self._allowed_ecus and ecu_id not in self._allowed_ecus:
             return ErrorCode.NOT_ALLOWED_ECU_ID
 
+        _logging_group_type = self.convert_from_log_type_to_log_group_type(log_type)
         if timestamp is None:
             timestamp = int(time.time()) * 1000  # milliseconds
         _logging_msg = LogMessage(
@@ -86,7 +97,7 @@ class OTAClientIoTLoggingServerServicer:
         )
         # logger.debug(f"receive log from {ecu_id}: {_logging_msg}")
         try:
-            self._queue.put_nowait((ecu_id, _logging_msg))
+            self._queue.put_nowait((_logging_group_type, ecu_id, _logging_msg))
         except Full:
             logger.debug(f"message dropped: {_logging_msg}")
             return ErrorCode.SERVER_QUEUE_FULL
@@ -123,11 +134,16 @@ class OTAClientIoTLoggingServerServicer:
         put log message from gRPC request
         """
         _ecu_id = request.ecu_id
+        _log_type = request.log_type
         _timestamp = request.timestamp
         _level = request.level
         _message = request.message
 
         _code = await self._put_log(
-            ecu_id=_ecu_id, timestamp=_timestamp, level=_level, message=_message
+            ecu_id=_ecu_id,
+            log_type=_log_type,
+            timestamp=_timestamp,
+            level=_level,
+            message=_message,
         )
         return PutLogResponse(code=_code)
