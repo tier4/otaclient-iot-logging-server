@@ -100,8 +100,8 @@ class TestAWSIoTLogger:
 
     @pytest.fixture
     def prepare_test_data(self):
-        self._log_group_name = "some_log_group_name"  # place holder
-        self._metrics_group_name = "some_metrics_group_name"  # place holder
+        self._otaclient_logs_log_group = "some_log_group_name"  # place holder
+        self._otaclient_logs_metrics_group = "some_metrics_group_name"  # place holder
 
         _msgs = generate_random_msgs(self.MSG_LEN, self.MSG_NUM)
         # prepare result for test_thread_main
@@ -109,9 +109,9 @@ class TestAWSIoTLogger:
         for _log_group_type, _ecu_id, _log_msg in _msgs:
             # get the log_group_name based on the log_group_type
             _log_group_name = (
-                self._metrics_group_name
+                self._otaclient_logs_metrics_group
                 if _log_group_type == LogGroupType.METRICS
-                else self._log_group_name
+                else self._otaclient_logs_log_group
             )
             _merged_msgs[(_log_group_name, _ecu_id)].append(_log_msg)
         self._merged_msgs = _merged_msgs
