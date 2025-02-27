@@ -72,8 +72,12 @@ class AWSIoTLogger:
         self._exc_types = client.exceptions
 
         self._session_config = session_config
-        self._log_group_name = session_config.aws_cloudwatch_log_group
-        self._metrics_group_name = session_config.aws_cloudwatch_metrics_log_group
+        self._otaclient_logs_log_group = (
+            session_config.aws_cloudwatch_otaclient_logs_log_group
+        )
+        self._otaclient_logs_metrics_group = (
+            session_config.aws_cloudwatch_otaclient_metrics_log_group
+        )
         self._interval = interval
         self._queue: LogsQueue = queue
         # NOTE: add this limitation to ensure all of the log_streams in a merge
@@ -84,7 +88,10 @@ class AWSIoTLogger:
     def _create_log_groups(self):
         # TODO: (20240214) should we let the edge side iot_logging_server
         #       create the log group?
-        log_group_names = [self._log_group_name, self._metrics_group_name]
+        log_group_names = [
+            self._otaclient_logs_log_group,
+            self._otaclient_logs_metrics_group,
+        ]
         client = self._client
         exc_types = self._exc_types
         for log_group_name in log_group_names:
@@ -197,9 +204,9 @@ class AWSIoTLogger:
             for (log_group_type, log_stream_suffix), logs in message_dict.items():
                 # get the log_group_name based on the log_group_type
                 log_group_name = (
-                    self._metrics_group_name
+                    self._otaclient_logs_metrics_group
                     if log_group_type == LogGroupType.METRICS
-                    else self._log_group_name
+                    else self._otaclient_logs_log_group
                 )
 
                 with contextlib.suppress(Exception):
