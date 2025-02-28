@@ -231,10 +231,18 @@ class IoTSessionConfig(FixedConfig):
 
     @computed_field
     @property
-    def aws_cloudwatch_log_group(self) -> str:
+    def aws_cloudwatch_otaclient_logs_log_group(self) -> str:
         return (
             f"/aws/greengrass/edge/{self.region}/"
             f"{self.account_id}/{self.profile}-edge-otaclient"
+        )
+
+    @computed_field
+    @property
+    def aws_cloudwatch_otaclient_metrics_log_group(self) -> str:
+        return (
+            f"/aws/greengrass/edge/{self.region}/"
+            f"{self.account_id}/{self.profile}-edge-otaclient-metrics"
         )
 
     @computed_field
