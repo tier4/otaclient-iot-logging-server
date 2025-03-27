@@ -1,6 +1,6 @@
 # Automatically generated from pyproject.toml by gen_requirements_txt.py script.
 # DO NOT EDIT! Only for reference use.
-aiohttp>=3.10.2,<3.11
+aiohttp==3.11.14
 awsiot-credentialhelper>=0.6,<0.7
 boto3>=1.34.35,<1.35
 botocore==1.34.35,<1.35

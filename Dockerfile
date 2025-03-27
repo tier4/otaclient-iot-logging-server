@@ -1,5 +1,5 @@
 # ------ common build args ------ #
-ARG UBUNTU_VER="noble"
+ARG UBUNTU_VER="jammy"
 
 #
 # ------ build package ------ #
