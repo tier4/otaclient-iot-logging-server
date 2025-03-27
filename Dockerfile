@@ -1,10 +1,30 @@
 # ------ common build args ------ #
-ARG UBUNTU_VER="jammy"
+ARG UBUNTU_VER="noble"
 
 #
 # ------ build package ------ #
 #
 FROM ubuntu:${UBUNTU_VER} AS builder
+
+# CVE-2025-1390
+RUN apt-get update ; \
+    apt-get install -y libcap2=1:2.66-5ubuntu2.2
+
+# CVE-2025-0395
+# Install reference : https://askubuntu.com/questions/718386/cannot-install-libc-bin
+RUN apt-get update ; \
+    apt-get download -y libc-bin=2.39-0ubuntu8.4 ; \
+    dpkg -x libc-bin*.deb unpackdir ; \
+    cp unpackdir/sbin/ldconfig /sbin ; \
+    apt-get install --reinstall -y libc-bin
+
+# CVE-2024-12243
+RUN apt-get update ; \
+    apt-get install -y libgnutls30t64=3.8.3-1.1ubuntu3.3
+
+# CVE-2024-12133
+RUN apt-get update ; \
+    apt-get install -y libtasn1-6=4.19.0-3ubuntu0.24.04.1
 
 COPY . /src/
 
