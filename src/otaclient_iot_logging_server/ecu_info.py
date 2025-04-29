@@ -27,9 +27,6 @@ from typing import List, Optional
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, IPvAnyAddress
 
-from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
-from otaclient_iot_logging_server.configs import server_cfg
-
 logger = logging.getLogger(__name__)
 
 
@@ -70,6 +67,10 @@ def parse_ecu_info(ecu_info_file: Path | str) -> Optional[ECUInfo]:
         logger.info(f"{ecu_info_file=} is invalid or missing: {e!r}")
 
 
-ecu_info = parse_ecu_info(server_cfg.ECU_INFO_YAML)
-if ecu_info:
-    monitored_config_files.add(server_cfg.ECU_INFO_YAML)
+# NOTE(20241113): since ecu_info.yaml file will still be modified regularly,
+#   temporary disable the logging filter with ecu_info.yaml.
+# ecu_info = parse_ecu_info(server_cfg.ECU_INFO_YAML)
+# if ecu_info:
+#     monitored_config_files.add(server_cfg.ECU_INFO_YAML)
+logger.warning("disable logging filtering for now")
+ecu_info = None
