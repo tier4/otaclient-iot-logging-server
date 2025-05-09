@@ -3,6 +3,8 @@ name: build wheel for release
 on:
   release:
     types: [published]
+  # allow the test CI to be manually triggerred
+  workflow_dispatch:
 
 permissions:
   contents: write # upload artifacts requires this permission
