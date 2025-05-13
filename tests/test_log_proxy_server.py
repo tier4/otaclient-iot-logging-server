@@ -127,10 +127,12 @@ class TestLogProxyServer:
         aiohttp_server_logger = logging.getLogger("aiohttp")
         aiohttp_server_logger.setLevel("ERROR")
         # add handler to the server
-        app.add_routes([
-            web.head(r"/{ecu_id}", handler.http_head),
-            web.post(r"/{ecu_id}", handler.http_put_log),
-        ])
+        app.add_routes(
+            [
+                web.head(r"/{ecu_id}", handler.http_head),
+                web.post(r"/{ecu_id}", handler.http_put_log),
+            ]
+        )
         # star the server
         runner = web.AppRunner(app)
         try:

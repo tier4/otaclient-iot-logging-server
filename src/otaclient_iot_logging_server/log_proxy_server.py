@@ -44,10 +44,12 @@ WAIT_BEFORE_SEND_READY_MSG = 2  # seconds
 
 async def _start_http_server(handler: OTAClientIoTLoggingServerServicer):
     app = web.Application()
-    app.add_routes([
-        web.head(r"/{ecu_id}", handler.http_head),
-        web.post(r"/{ecu_id}", handler.http_put_log),
-    ])
+    app.add_routes(
+        [
+            web.head(r"/{ecu_id}", handler.http_head),
+            web.post(r"/{ecu_id}", handler.http_put_log),
+        ]
+    )
 
     runner = web.AppRunner(app)
     await runner.setup()
