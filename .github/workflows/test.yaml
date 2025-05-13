@@ -27,12 +27,10 @@ jobs:
       matrix:
         # currently we only need to ensure it is running on the following OS
         # with OS-shipped python interpreter.
-        os: ["ubuntu-20.04", "ubuntu-22.04"]
+        os: ["ubuntu-22.04"]
         include:
           - os: ubuntu-22.04
             python_version: "3.10"
-          - os: ubuntu-20.04
-            python_version: "3.8"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout commit
