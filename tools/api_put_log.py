@@ -15,7 +15,6 @@ async def run_put_log(log_message: str, server_address: str = "127.0.0.1:8084") 
 
     Args:
         log_message: The message to be logged
-        log_level: Log level (e.g., "INFO", "WARN", "ERROR")
         server_address: Server address to connect to (e.g., "127.0.0.1:8084")
     """
     # Create async channel to server
@@ -51,7 +50,7 @@ async def run_put_log(log_message: str, server_address: str = "127.0.0.1:8084") 
 if __name__ == "__main__":
     # Parse command line arguments
     if len(sys.argv) < 2:
-        print("Usage: python api_put_log.py 'log message' [LOG_LEVEL] [server_address]")
+        print("Usage: python api_put_log.py 'log message' [server_address]")
         sys.exit(1)
 
     log_message = sys.argv[1]
