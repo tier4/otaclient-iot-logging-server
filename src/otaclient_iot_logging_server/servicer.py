@@ -104,6 +104,15 @@ class OTAClientIoTLoggingServerServicer:
 
         return ErrorCode.NO_FAILURE
 
+    async def http_head(self, request: Request) -> PutLogResponse:
+        """
+        Handle HEAD requests for connectivity and availability checks.
+        """
+        _ecu_id = request.match_info["ecu_id"]
+        if self._allowed_ecus and _ecu_id not in self._allowed_ecus:
+            return web.Response(status=HTTPStatus.BAD_REQUEST)
+        return web.Response(status=HTTPStatus.OK)
+
     async def http_put_log(self, request: Request) -> PutLogResponse:
         """
         put log message from HTTP POST request.

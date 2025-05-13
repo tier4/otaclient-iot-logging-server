@@ -127,7 +127,10 @@ class TestLogProxyServer:
         aiohttp_server_logger = logging.getLogger("aiohttp")
         aiohttp_server_logger.setLevel("ERROR")
         # add handler to the server
-        app.add_routes([web.post(r"/{ecu_id}", handler.http_put_log)])
+        app.add_routes([
+            web.head(r"/{ecu_id}", handler.http_head),
+            web.post(r"/{ecu_id}", handler.http_put_log),
+        ])
         # star the server
         runner = web.AppRunner(app)
         try:
@@ -192,6 +195,8 @@ class TestLogProxyServer:
         for item in self._msgs:
             _ecu_id, _msg = item.ecu_id, item.message
             _log_upload_endpoint_url = urljoin(self.SERVER_URL, _ecu_id)
+            async with http_client_sesion.head(_log_upload_endpoint_url):
+                pass  # raise_for_status is set on session
             async with http_client_sesion.post(_log_upload_endpoint_url, data=_msg):
                 pass  # raise_for_status is set on session
         # ------ check result ------ #
@@ -223,6 +228,8 @@ class TestLogProxyServer:
     ):
         with pytest.raises(aiohttp.client_exceptions.ClientResponseError) as exc_info:
             _log_upload_endpoint_url = urljoin(self.SERVER_URL, _ecu_id)
+            async with http_client_sesion.head(_log_upload_endpoint_url):
+                pass  # raise_for_status is set on session
             async with http_client_sesion.post(_log_upload_endpoint_url, data=_data):
                 pass  # raise_for_status is set on session
         assert exc_info.value.status == HTTPStatus.BAD_REQUEST
