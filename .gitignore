@@ -162,3 +162,5 @@ cython_debug/
 # local vscode settings
 .devcontainer
 .vscode
+
+.ruff_cache
