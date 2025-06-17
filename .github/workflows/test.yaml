@@ -12,6 +12,11 @@ on:
   # allow the test CI to be manually triggerred
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: read
+  actions: read
+
 jobs:
   pytest_with_coverage_on_supported_os:
     strategy:
