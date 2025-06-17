@@ -20,7 +20,6 @@ This is expected to be used together with systemd.unit Restart policy
 to achieve automatically restart on configuration files changed.
 """
 
-
 from __future__ import annotations
 
 import logging
