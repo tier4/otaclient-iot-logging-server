@@ -16,7 +16,6 @@
 Basically the one copied from otaclient, with only parsing fields we care about.
 """
 
-
 from __future__ import annotations
 
 import logging

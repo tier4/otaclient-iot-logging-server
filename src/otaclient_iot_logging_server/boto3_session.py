@@ -74,9 +74,9 @@ def _load_certificate(cert_path: str, pkcs11_cfg: Optional[PKCS11Config]) -> byt
     NOTE: Boto3SessionProvider only takes PEM format cert.
     """
     if cert_path.startswith("pkcs11"):
-        assert (
-            pkcs11_cfg
-        ), "certificate is provided by pkcs11, but no pkcs11_cfg is not available"
+        assert pkcs11_cfg, (
+            "certificate is provided by pkcs11, but no pkcs11_cfg is not available"
+        )
 
         _parsed_cert_uri = parse_pkcs11_uri(cert_path)
         # NOTE: the cert pull from pkcs11 interface is in DER format
@@ -109,9 +109,9 @@ def _get_session(config: IoTSessionConfig) -> Session:
 
 def _get_session_pkcs11(config: IoTSessionConfig) -> Session:
     """Get a session backed by privkey provided by pkcs11."""
-    assert (
-        pkcs11_cfg := config.pkcs11_config
-    ), "privkey is provided by pkcs11, but pkcs11_config is not available"
+    assert (pkcs11_cfg := config.pkcs11_config), (
+        "privkey is provided by pkcs11, but pkcs11_config is not available"
+    )
 
     _parsed_key_uri = parse_pkcs11_uri(config.private_key_path)
     return Boto3SessionProvider(
