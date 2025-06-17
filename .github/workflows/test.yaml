@@ -39,21 +39,17 @@ jobs:
           # sonarcloud needs main branch's ref
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # also see https://docs.astral.sh/uv/guides/integration/github/#multiple-python-versions
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python_version }}
-          cache: "pip"
-
-      - name: Install package
-        run: |
-          python -m pip install -q -U pip
-          pip install -q .[dev]
+          enable-cache: true
 
       - name: Execute pytest with coverage
         run: |
-          coverage run -m pytest --junit-xml=test_result/pytest.xml
-          coverage xml -o test_result/coverage.xml
+          uv run --python python3 --no-managed-python coverage run -m pytest --junit-xml=test_result/pytest.xml
+          uv run --python python3 --no-managed-python coverage xml -o test_result/coverage.xml
 
       # export the coverage report to the comment!
       - name: Add coverage report to PR comment
@@ -69,7 +65,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   pytest_on_supported_python_vers:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
@@ -78,16 +74,12 @@ jobs:
       - name: Checkout commit
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      # also see https://docs.astral.sh/uv/guides/integration/github/#multiple-python-versions
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+          enable-cache: true
 
-      - name: Install package
-        run: |
-          python -m pip install -q -U pip
-          pip install -q .[dev]
-
-      - name: Execute pytest
-        run: pytest
+      - name: Execute pytest via uv
+        run: uv run -m pytest

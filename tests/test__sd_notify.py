@@ -34,7 +34,6 @@ def socket_object_mock(mocker: pytest_mock.MockerFixture):
 @pytest.fixture
 def socket_conn_mock(mocker: pytest_mock.MockerFixture, socket_object_mock):
     class DummySocketObject:
-
         _mock: Any = socket_object_mock
 
         def __new__(cls, _family, _type, *args):
