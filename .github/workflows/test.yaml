@@ -4,21 +4,18 @@ on:
   pull_request:
     branches:
       - main
-    # only trigger unit test CI when src or tests changed
-    paths:
-      - "src/**"
-      - "tests/**"
-      - ".github/workflows/test.yaml"
+
   push:
     branches:
       - main
-    # only trigger unit test CI when src or tests changed
-    paths:
-      - "src/**"
-      - "tests/**"
-      - ".github/workflows/test.yaml"
+
   # allow the test CI to be manually triggerred
   workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+  actions: read
 
 jobs:
   pytest_with_coverage_on_supported_os:
