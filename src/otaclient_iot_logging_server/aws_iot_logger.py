@@ -187,8 +187,8 @@ class AWSIoTLogger:
         while True:
             # merge LogMessages into the same source, identified by
             # log_group_type and log_stream_suffix.
-            message_dict: dict[tuple[LogGroupType, str], list[LogMessage]] = defaultdict(
-                list
+            message_dict: dict[tuple[LogGroupType, str], list[LogMessage]] = (
+                defaultdict(list)
             )
 
             _merge_count = 0
