@@ -37,6 +37,7 @@ dependencies = [
   "pyyaml>=6.0.1,<7",
   "typing-extensions>=4",
 ]
+
 urls.Homepage = "https://github.com/tier4/otaclient-iot-logging-server"
 urls.Source = "https://github.com/tier4/otaclient-iot-logging-server"
 scripts.iot_logging_server = "otaclient_iot_logging_server.__main__:main"
@@ -46,7 +47,7 @@ dev = [
   "coverage~=7.4",
   "pre-commit>=3,<5",
   "pytest~=7.4",
-  "pytest-asyncio~=0.23",
+  "pytest-asyncio>=0.23,<2",
   "pytest-env~=1.1",
   "pytest-mock~=3.12",
 ]
