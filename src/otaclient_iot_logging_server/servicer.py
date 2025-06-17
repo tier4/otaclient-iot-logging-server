@@ -72,7 +72,7 @@ class OTAClientIoTLoggingServerServicer:
         self,
         ecu_id: str,
         log_type: LogType = LogType.LOG,
-        timestamp: int = None,
+        timestamp: int | None = None,
         level: LogLevel = LogLevel.UNSPECIFIC,
         message: str = "",
     ) -> ErrorCode:

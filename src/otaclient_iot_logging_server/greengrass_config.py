@@ -13,7 +13,6 @@
 # limitations under the License.
 """Greengrass config v1/v2 parsing implementation."""
 
-
 from __future__ import annotations
 
 import json
@@ -225,8 +224,7 @@ class IoTSessionConfig(FixedConfig):
     @property
     def aws_role_alias(self) -> str:
         return (
-            f"{self.profile}-autoware-adapter-"
-            "credentials-iot-secrets-access-role-alias"
+            f"{self.profile}-autoware-adapter-credentials-iot-secrets-access-role-alias"
         )
 
     @computed_field

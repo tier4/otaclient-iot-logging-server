@@ -13,7 +13,6 @@
 # limitations under the License.
 """otaclient AWS IoT logging server configs."""
 
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -67,7 +66,6 @@ class _AWSProfile(BaseModel):
 
 
 class AWSProfileInfo(RootModel[List[_AWSProfile]]):
-
     def get_profile_info(self, profile_name: str) -> _AWSProfile:
         for profile in self.root:
             if profile.profile_name == profile_name:

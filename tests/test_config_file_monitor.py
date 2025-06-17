@@ -28,7 +28,6 @@ class _SuccessExit(Exception):
 
 
 class TestConfigFileMonitor:
-
     @pytest.fixture(autouse=True)
     def setup_set(self, tmp_path: Path, mocker: MockerFixture):
         self.config_file = config_file = tmp_path / "config_file"

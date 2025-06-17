@@ -13,7 +13,6 @@
 # limitations under the License.
 """A simple implementation of systemd sd_nofity protocol."""
 
-
 from __future__ import annotations
 
 import logging

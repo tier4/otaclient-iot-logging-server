@@ -63,7 +63,6 @@ def test_chain_query(
 
 
 class TestRetry:
-
     class HandledException(Exception):
         pass
 
