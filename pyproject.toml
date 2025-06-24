@@ -38,12 +38,9 @@ dependencies = [
   "typing-extensions>=4",
 ]
 
-[project.urls]
-Homepage = "https://github.com/tier4/otaclient-iot-logging-server"
-Source = "https://github.com/tier4/otaclient-iot-logging-server"
-
-[project.scripts]
-iot_logging_server = "otaclient_iot_logging_server.__main__:main"
+urls.Homepage = "https://github.com/tier4/otaclient-iot-logging-server"
+urls.Source = "https://github.com/tier4/otaclient-iot-logging-server"
+scripts.iot_logging_server = "otaclient_iot_logging_server.__main__:main"
 
 [dependency-groups]
 dev = [
