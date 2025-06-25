@@ -9,7 +9,10 @@ requires = [
 name = "otaclient-iot-logging-server"
 description = "A logging server that uploads logs sent from otaclient to AWS cloudwatch."
 readme = "README.md"
-license = { text = "LICENSE.md" }
+license = "Apache-2.0"
+license-files = [
+  "LICENSE",
+]
 requires-python = ">=3.8"
 classifiers = [
   "License :: OSI Approved :: Apache Software License",
@@ -29,7 +32,7 @@ dependencies = [
   "aiohttp==3.10.11",
   "awsiot-credentialhelper>=0.6,<0.7",
   "boto3>=1.34.35,<1.35",
-  "botocore==1.34.35,<1.35",
+  "botocore>=1.34.35,<1.35",
   "grpcio==1.70",
   "protobuf>=4.21.12,<5.29",
   "pydantic>=2.6,<3",
@@ -102,7 +105,7 @@ lint.ignore = [
   "E701", # (multiple statements on one line)
   "S101", # (use of assert): mostly we use assert for typing
 ]
-lint.pydocstyle = { convention = "google" }
+lint.pydocstyle.convention = "google"
 
 [tool.pytest.ini_options]
 env = [
