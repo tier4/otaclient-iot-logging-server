@@ -9,7 +9,10 @@ requires = [
 name = "otaclient-iot-logging-server"
 description = "A logging server that uploads logs sent from otaclient to AWS cloudwatch."
 readme = "README.md"
-license = { file = "LICENSE.md" }
+license = "Apache-2.0"
+license-files = [
+  "LICENSE",
+]
 requires-python = ">=3.8"
 classifiers = [
   "License :: OSI Approved :: Apache Software License",
