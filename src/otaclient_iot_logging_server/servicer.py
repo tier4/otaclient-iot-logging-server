@@ -44,7 +44,7 @@ class OTAClientIoTLoggingServerServicer:
     def __init__(
         self,
         *,
-        ecu_info: ECUInfo,
+        ecu_info: ECUInfo | None = None,
         queue: LogsQueue,
     ):
         self._queue = queue
@@ -68,7 +68,7 @@ class OTAClientIoTLoggingServerServicer:
             return LogGroupType.METRICS
         return LogGroupType.LOG
 
-    async def _put_log(
+    def _put_log(
         self,
         ecu_id: str,
         log_type: LogType = LogType.LOG,
@@ -104,14 +104,14 @@ class OTAClientIoTLoggingServerServicer:
 
         return ErrorCode.NO_FAILURE
 
-    async def http_put_log(self, request: Request) -> PutLogResponse:
+    async def http_put_log(self, request: Request) -> web.Response:
         """
         put log message from HTTP POST request.
         """
         _ecu_id = request.match_info["ecu_id"]
         _message = await request.text()
 
-        _code = await self._put_log(ecu_id=_ecu_id, message=_message)
+        _code = self._put_log(ecu_id=_ecu_id, message=_message)
 
         if _code == ErrorCode.NO_MESSAGE or _code == ErrorCode.NOT_ALLOWED_ECU_ID:
             _status = HTTPStatus.BAD_REQUEST
@@ -122,7 +122,7 @@ class OTAClientIoTLoggingServerServicer:
 
         return web.Response(status=_status)
 
-    async def grpc_check(self, service: str) -> HealthCheckResponse:
+    def grpc_check(self, service: str) -> HealthCheckResponse:
         """
         check the service status from gRPC request
         """
@@ -139,7 +139,7 @@ class OTAClientIoTLoggingServerServicer:
         _level = request.level
         _message = request.message
 
-        _code = await self._put_log(
+        _code = self._put_log(
             ecu_id=_ecu_id,
             log_type=_log_type,
             timestamp=_timestamp,

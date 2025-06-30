@@ -31,9 +31,7 @@ class OTAClientIoTLoggingServiceV1(pb2_grpc.OTAClientIoTLoggingServiceServicer):
     async def Check(
         self, request: pb2.HealthCheckRequest, context
     ) -> pb2.HealthCheckResponse:
-        response = await self._stub.grpc_check(
-            _types.HealthCheckRequest.convert(request)
-        )
+        response = self._stub.grpc_check(_types.HealthCheckRequest.convert(request))
         return response.export_pb()
 
     async def PutLog(self, request: pb2.PutLogRequest, context) -> pb2.PutLogResponse:
