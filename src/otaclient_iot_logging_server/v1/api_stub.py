@@ -35,5 +35,5 @@ class OTAClientIoTLoggingServiceV1(pb2_grpc.OTAClientIoTLoggingServiceServicer):
         return response.export_pb()
 
     async def PutLog(self, request: pb2.PutLogRequest, context) -> pb2.PutLogResponse:
-        response = await self._stub.grpc_put_log(_types.PutLogRequest.convert(request))
+        response = self._stub.grpc_put_log(_types.PutLogRequest.convert(request))
         return response.export_pb()

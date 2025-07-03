@@ -129,7 +129,7 @@ class OTAClientIoTLoggingServerServicer:
         # always return SERVING status
         return HealthCheckResponse(status=ServiceStatus.SERVING)
 
-    async def grpc_put_log(self, request: PutLogRequest) -> PutLogResponse:
+    def grpc_put_log(self, request: PutLogRequest) -> PutLogResponse:
         """
         put log message from gRPC request
         """
