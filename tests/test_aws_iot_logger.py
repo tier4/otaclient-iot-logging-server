@@ -146,9 +146,6 @@ class TestAWSIoTLogger:
 
     def test_thread_main(self, mocker: MockerFixture):
         func_to_test = AWSIoTLogger.thread_main
-        self._create_log_groups = mocked__create_log_groups = mocker.MagicMock(
-            spec=AWSIoTLogger._create_log_groups
-        )
 
         # ------ execution ------ #
         with pytest.raises(self._TestFinished):
@@ -156,6 +153,5 @@ class TestAWSIoTLogger:
         logger.info("execution finished")
 
         # ------ check result ------ #
-        mocked__create_log_groups.assert_called_once()
         # confirm the send_messages mock receives the expecting calls.
         assert self._merged_msgs == self._test_result

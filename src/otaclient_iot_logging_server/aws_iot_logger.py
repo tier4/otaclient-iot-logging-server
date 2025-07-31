@@ -85,38 +85,6 @@ class AWSIoTLogger:
         self._max_logs_per_merge = min(max_logs_per_merge, self.MAX_LOGS_PER_PUT)
 
     @retry(max_retry=16, backoff_factor=2, backoff_max=32)
-    def _create_log_groups(self):
-        # TODO: (20240214) should we let the edge side iot_logging_server
-        #       create the log group?
-        log_group_names = [
-            self._otaclient_logs_log_group,
-            self._otaclient_logs_metrics_group,
-        ]
-        client = self._client
-        exc_types = self._exc_types
-        for log_group_name in log_group_names:
-            try:
-                client.create_log_group(logGroupName=log_group_name)
-                logger.info(f"{log_group_name=} has been created")
-            except exc_types.ResourceAlreadyExistsException as e:
-                logger.debug(
-                    f"{log_group_name=} already existed, skip creating: {e.response}"
-                )
-            except ValueError as e:
-                if e.__cause__ and isinstance(
-                    e.__cause__, awscrt.exceptions.AwsCrtError
-                ):
-                    logger.error(
-                        (f"failed to create mtls connection to remote: {e.__cause__}")
-                    )
-                    raise e.__cause__ from None
-                logger.error(f"failed to create {log_group_name=}: {e!r}")
-                raise
-            except Exception as e:
-                logger.error(f"failed to create {log_group_name=}: {e!r}")
-                raise
-
-    @retry(max_retry=16, backoff_factor=2, backoff_max=32)
     def _create_log_stream(self, log_group_name: str, log_stream_name: str):
         client = self._client
         exc_types = self._exc_types
@@ -181,9 +149,6 @@ class AWSIoTLogger:
 
     def thread_main(self) -> NoReturn:
         """Main entry for running this iot_logger in a thread."""
-        # unconditionally create log_group and log_stream, do nothing if existed.
-        self._create_log_groups()
-
         while True:
             # merge LogMessages into the same source, identified by
             # log_group_type and log_stream_suffix.
