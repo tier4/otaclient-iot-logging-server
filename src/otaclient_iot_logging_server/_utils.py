@@ -15,8 +15,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
+import sys
 import time
 from functools import partial, wraps
+from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar, overload
 
 from pydantic import BaseModel, ConfigDict
@@ -144,3 +148,46 @@ def parse_pkcs11_uri(_pkcs11_uri: str) -> PKCS11URI:
         k, v = opt.split("=", maxsplit=1)
         pkcs11_opts_dict[k] = v
     return PKCS11URI(**pkcs11_opts_dict)
+
+
+DEFAULT_FILE_CHUNK_SIZE = 1024 * 1024  # 1MiB
+
+if sys.version_info >= (3, 11):
+    from hashlib import file_digest as _file_digest
+
+else:
+
+    def _file_digest(
+        fileobj: io.BufferedReader,
+        digest,
+        /,
+        *,
+        _bufsize: int = DEFAULT_FILE_CHUNK_SIZE,
+    ) -> hashlib._Hash:
+        """
+        Basically a simpified copy from 3.11's hashlib.file_digest.
+        """
+        digestobj = hashlib.new(digest)
+
+        buf = bytearray(_bufsize)  # Reusable buffer to reduce allocations.
+        view = memoryview(buf)
+        while True:
+            size = fileobj.readinto(buf)
+            if size == 0:
+                break  # EOF
+            digestobj.update(view[:size])
+
+        return digestobj
+
+
+def cal_file_digest(
+    fpath: str | Path,
+    algorithm: str,
+    chunk_size: int = DEFAULT_FILE_CHUNK_SIZE,
+) -> str:
+    """Generate file digest with <algorithm>.
+
+    A wrapper for the _file_digest method.
+    """
+    with open(fpath, "rb") as f:
+        return _file_digest(f, algorithm, _bufsize=chunk_size).hexdigest()
