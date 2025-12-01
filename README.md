@@ -32,7 +32,7 @@ The behaviors of the iot_logging_server can be configured with the following env
 | GREENGRASS_V1_CONFIG | `/greengrass/config/config.json` | |
 | GREENGRASS_V2_CONFIG | `/greengrass/v2/init_config/config.yaml` | If both v1 and v2 config file exist, v2 will be used in prior. |
 | AWS_PROFILE_INFO | `/opt/ota/iot_logger/aws_profile_info.yaml` | The location of AWS profile info mapping files. |
-| ECU_INFO_YAML | `/boot/ota/ecu_info.yaml` | The location of ecu_info.yaml config file. iot-logger server will parse the config file and only process logs sending from known ECUs.|
+| ECU_INFO_YAML | `/boot/ota/ecu_info.yaml` | The location of ecu_info.yaml config file. iot-logger server will parse the config file and only process logs sending from known ECUs. |
 | LISTEN_ADDRESS | `127.0.0.1` | The IP address iot-logger server listen on. By default only receive logs from local machine. |
 | LISTEN_PORT | `8083` | |
 | LISTEN_PORT_GRPC | `8084` | |
