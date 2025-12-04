@@ -24,10 +24,12 @@ jobs:
       matrix:
         # currently we only need to ensure it is running on the following OS
         # with OS-shipped python interpreter.
-        os: ["ubuntu-22.04"]
+        os: ["ubuntu-22.04", "ubuntu-24.04"]
         include:
           - os: ubuntu-22.04
             python_version: "3.10"
+          - os: ubuntu-24.04
+            python_version: "3.12"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout commit
@@ -50,6 +52,7 @@ jobs:
 
       # export the coverage report to the comment!
       - name: Add coverage report to PR comment
+        if: matrix.os == 'ubuntu-24.04'
         continue-on-error: true
         uses: MishaKav/pytest-coverage-comment@v1.2.0
         with:
@@ -57,6 +60,7 @@ jobs:
           junitxml-path: test_result/pytest.xml
 
       - name: SonarCloud Scan
+        if: matrix.os == 'ubuntu-24.04'
         uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -66,7 +70,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - name: Checkout commit
         uses: actions/checkout@v6
