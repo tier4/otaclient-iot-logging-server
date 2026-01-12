@@ -36,7 +36,9 @@ frozenlist==1.5.0
     # via
     #   aiohttp
     #   aiosignal
-grpcio==1.70.0
+grpcio==1.70.0 ; python_full_version < '3.9'
+    # via otaclient-iot-logging-server
+grpcio==1.76.0 ; python_full_version >= '3.9'
     # via otaclient-iot-logging-server
 idna==3.10
     # via yarl
@@ -79,6 +81,7 @@ typing-extensions==4.13.2
     #   aiosignal
     #   annotated-types
     #   awsiot-credentialhelper
+    #   grpcio
     #   multidict
     #   otaclient-iot-logging-server
     #   pydantic
