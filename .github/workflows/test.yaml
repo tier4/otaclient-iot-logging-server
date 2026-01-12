@@ -33,14 +33,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout commit
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
           # sonarcloud needs main branch's ref
           fetch-depth: 0
 
       # also see https://docs.astral.sh/uv/guides/integration/github/#multiple-python-versions
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7
         with:
           python-version: ${{ matrix.python_version }}
           enable-cache: true
@@ -54,7 +54,7 @@ jobs:
       - name: Add coverage report to PR comment
         if: matrix.os == 'ubuntu-24.04'
         continue-on-error: true
-        uses: MishaKav/pytest-coverage-comment@v1.2.0
+        uses: MishaKav/pytest-coverage-comment@ae0e8a539a3f310aefb3bfb6a2209778a21fa42b # v1.2.0
         with:
           pytest-xml-coverage-path: test_result/coverage.xml
           junitxml-path: test_result/pytest.xml
@@ -73,11 +73,11 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - name: Checkout commit
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       # also see https://docs.astral.sh/uv/guides/integration/github/#multiple-python-versions
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
