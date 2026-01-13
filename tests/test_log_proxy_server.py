@@ -28,6 +28,7 @@ import aiohttp
 import aiohttp.client_exceptions
 import grpc
 import pytest
+import pytest_asyncio
 from aiohttp import web
 from pytest_mock import MockerFixture
 
@@ -107,8 +108,7 @@ class TestLogProxyServer:
         self._ecu_info = parse_ecu_info(TEST_DIR / "ecu_info.yaml")
         mocker.patch(f"{MODULE}.ecu_info", self._ecu_info)
 
-    @pytest.mark.asyncio
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def launch_http_server(self, mocker: MockerFixture, mock_ecu_info):
         """
         See https://docs.aiohttp.org/en/stable/web_advanced.html#custom-resource-implementation
@@ -141,8 +141,7 @@ class TestLogProxyServer:
         finally:
             await runner.cleanup()
 
-    @pytest.mark.asyncio
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def http_client_sesion(self):
         client_session = aiohttp.ClientSession(
             raise_for_status=True,
@@ -153,8 +152,7 @@ class TestLogProxyServer:
         finally:
             await client_session.close()
 
-    @pytest.mark.asyncio
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def launch_grpc_server(self, mocker: MockerFixture, mock_ecu_info):
         mocker.patch(f"{MODULE}.server_cfg", _test_server_cfg)
 

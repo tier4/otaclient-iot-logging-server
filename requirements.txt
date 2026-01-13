@@ -16,11 +16,17 @@ annotated-types==0.7.0
     # via pydantic
 async-timeout==5.0.1 ; python_full_version < '3.11'
     # via aiohttp
-attrs==25.3.0
+attrs==25.3.0 ; python_full_version < '3.9'
     # via aiohttp
-awscrt==0.16.26
+attrs==25.4.0 ; python_full_version >= '3.9'
+    # via aiohttp
+awscrt==0.16.26 ; python_full_version < '3.8.1'
     # via awsiot-credentialhelper
-awsiot-credentialhelper==0.6.0
+awscrt==0.31.0 ; python_full_version >= '3.8.1'
+    # via awsiot-credentialhelper
+awsiot-credentialhelper==0.6.0 ; python_full_version < '3.8.1'
+    # via otaclient-iot-logging-server
+awsiot-credentialhelper==1.0.2 ; python_full_version >= '3.8.1'
     # via otaclient-iot-logging-server
 boto3==1.37.38 ; python_full_version < '3.9'
     # via
@@ -40,7 +46,11 @@ botocore==1.42.26 ; python_full_version >= '3.9'
     #   awsiot-credentialhelper
     #   boto3
     #   s3transfer
-frozenlist==1.5.0
+frozenlist==1.5.0 ; python_full_version < '3.9'
+    # via
+    #   aiohttp
+    #   aiosignal
+frozenlist==1.8.0 ; python_full_version >= '3.9'
     # via
     #   aiohttp
     #   aiosignal
@@ -48,13 +58,17 @@ grpcio==1.70.0 ; python_full_version < '3.9'
     # via otaclient-iot-logging-server
 grpcio==1.76.0 ; python_full_version >= '3.9'
     # via otaclient-iot-logging-server
-idna==3.10
+idna==3.11
     # via yarl
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-multidict==6.1.0
+multidict==6.1.0 ; python_full_version < '3.9'
+    # via
+    #   aiohttp
+    #   yarl
+multidict==6.7.0 ; python_full_version >= '3.9'
     # via
     #   aiohttp
     #   yarl
@@ -64,21 +78,35 @@ propcache==0.4.1 ; python_full_version >= '3.9'
     # via
     #   aiohttp
     #   yarl
-protobuf==5.28.3
+protobuf==5.29.5 ; python_full_version < '3.9'
     # via otaclient-iot-logging-server
-pydantic==2.10.6
+protobuf==6.33.4 ; python_full_version >= '3.9'
+    # via otaclient-iot-logging-server
+pydantic==2.10.6 ; python_full_version < '3.9'
     # via
     #   otaclient-iot-logging-server
     #   pydantic-settings
-pydantic-core==2.27.2
+pydantic==2.12.5 ; python_full_version >= '3.9'
+    # via
+    #   otaclient-iot-logging-server
+    #   pydantic-settings
+pydantic-core==2.27.2 ; python_full_version < '3.9'
     # via pydantic
-pydantic-settings==2.8.1
+pydantic-core==2.41.5 ; python_full_version >= '3.9'
+    # via pydantic
+pydantic-settings==2.8.1 ; python_full_version < '3.9'
+    # via otaclient-iot-logging-server
+pydantic-settings==2.11.0 ; python_full_version == '3.9.*'
+    # via otaclient-iot-logging-server
+pydantic-settings==2.12.0 ; python_full_version >= '3.10'
     # via otaclient-iot-logging-server
 python-dateutil==2.9.0.post0
     # via botocore
-python-dotenv==1.0.1
+python-dotenv==1.0.1 ; python_full_version < '3.9'
     # via pydantic-settings
-pyyaml==6.0.2
+python-dotenv==1.2.1 ; python_full_version >= '3.9'
+    # via pydantic-settings
+pyyaml==6.0.3
     # via otaclient-iot-logging-server
 s3transfer==0.11.5 ; python_full_version < '3.9'
     # via boto3
@@ -86,16 +114,28 @@ s3transfer==0.16.0 ; python_full_version >= '3.9'
     # via boto3
 six==1.17.0
     # via python-dateutil
-typing-extensions==4.13.2
+typing-extensions==4.13.2 ; python_full_version < '3.9'
+    # via
+    #   annotated-types
+    #   awsiot-credentialhelper
+    #   multidict
+    #   otaclient-iot-logging-server
+    #   pydantic
+    #   pydantic-core
+typing-extensions==4.15.0 ; python_full_version >= '3.9'
     # via
     #   aiosignal
-    #   annotated-types
     #   awsiot-credentialhelper
     #   grpcio
     #   multidict
     #   otaclient-iot-logging-server
     #   pydantic
     #   pydantic-core
+    #   typing-inspection
+typing-inspection==0.4.2 ; python_full_version >= '3.9'
+    # via
+    #   pydantic
+    #   pydantic-settings
 urllib3==1.26.20
     # via
     #   awsiot-credentialhelper
