@@ -26,11 +26,10 @@ boto3==1.34.35
     # via
     #   awsiot-credentialhelper
     #   otaclient-iot-logging-server
-botocore==1.34.35
+botocore==1.34.162
     # via
     #   awsiot-credentialhelper
     #   boto3
-    #   otaclient-iot-logging-server
     #   s3transfer
 frozenlist==1.5.0
     # via

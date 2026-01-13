@@ -426,16 +426,16 @@ wheels = [
 
 [[package]]
 name = "botocore"
-version = "1.34.35"
+version = "1.34.162"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/54/00c8d6dd02768c79425fdb57213fd735eaea63efa57b351ad5f6d1fda2bc/botocore-1.34.35.tar.gz", hash = "sha256:8a2b53ab772584a5f7e2fe1e4a59028b0602cfef8e39d622db7c6b670e4b1ee6", size = 12159181, upload-time = "2024-02-05T20:22:35.116Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/de/17d672eac6725da49bd5832e3bd2f74c4d212311cd393fd56b59f51a4e86/botocore-1.34.162.tar.gz", hash = "sha256:adc23be4fb99ad31961236342b7cbf3c0bfc62532cd02852196032e8c0d682f3", size = 12676693, upload-time = "2024-08-15T19:25:25.162Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/28/3352b6a205ca2e3e0a2f1bb0b3418807862d1717c923782dd58712d16149/botocore-1.34.35-py3-none-any.whl", hash = "sha256:b67b8c865973202dc655a493317ae14b33d115e49ed6960874eb05d950167b37", size = 11935277, upload-time = "2024-02-05T20:22:18.532Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/47/e35f788047c91110f48703a6254e5c84e33111b3291f7b57a653ca00accf/botocore-1.34.162-py3-none-any.whl", hash = "sha256:2d918b02db88d27a75b48275e6fb2506e9adaaddbec1ffa6a8a0898b34e769be", size = 12468049, upload-time = "2024-08-15T19:25:18.301Z" },
 ]
 
 [[package]]
@@ -939,7 +939,6 @@ dependencies = [
     { name = "aiohttp", version = "3.13.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "awsiot-credentialhelper" },
     { name = "boto3" },
-    { name = "botocore" },
     { name = "grpcio", version = "1.70.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "grpcio", version = "1.76.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "protobuf" },
@@ -966,7 +965,6 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.10.11,<3.14" },
     { name = "awsiot-credentialhelper", specifier = ">=0.6,<1.1" },
     { name = "boto3", specifier = ">=1.34.35,<1.35" },
-    { name = "botocore", specifier = ">=1.34.35,<1.35" },
     { name = "grpcio", specifier = ">=1.70,<1.77" },
     { name = "protobuf", specifier = ">=4.25.8,<6.34" },
     { name = "pydantic", specifier = ">=2.6,<3" },
