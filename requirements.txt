@@ -84,7 +84,7 @@ propcache==0.4.1 ; python_full_version >= '3.9'
     #   yarl
 protobuf==5.29.5 ; python_full_version < '3.9'
     # via otaclient-iot-logging-server
-protobuf==6.33.4 ; python_full_version >= '3.9'
+protobuf==6.33.5 ; python_full_version >= '3.9'
     # via otaclient-iot-logging-server
 pydantic==2.10.6 ; python_full_version < '3.9'
     # via
