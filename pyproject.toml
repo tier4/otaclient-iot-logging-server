@@ -55,9 +55,6 @@ dev = [
   "pytest-mock~=3.12",
 ]
 
-[tool.hatch.version]
-source = "vcs"
-
 [tool.hatch.build.hooks.vcs]
 version-file = "src/otaclient_iot_logging_server/_version.py"
 
@@ -74,6 +71,9 @@ only-include = [
 sources = [
   "src",
 ]
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff]
 target-version = "py38"
@@ -125,13 +125,6 @@ testpaths = [
   "tests",
 ]
 
-[tool.coverage.run]
-branch = true
-source = [
-  "otaclient_iot_logging_server",
-]
-relative_files = true
-
 [tool.coverage.report]
 omit = [
   "**/*_pb2.py*",
@@ -146,3 +139,9 @@ exclude_also = [
 ]
 show_missing = true
 skip_empty = true
+[tool.coverage.run]
+branch = true
+source = [
+  "otaclient_iot_logging_server",
+]
+relative_files = true

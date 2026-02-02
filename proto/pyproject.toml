@@ -25,11 +25,10 @@ classifiers = [
 ]
 urls.Source = "https://github.com/tier4/otaclient-iot-logging-server/proto"
 
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.metadata]
-allow-direct-references = true
+[tool.hatch.build.hooks.custom]
+proto_builds = [
+  { proto_file = "otaclient_iot_logging_server_v1.proto", output_package = "otaclient_iot_logging_server_pb2/v1", api_version = "1.0.0" },
+]
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/otaclient_iot_logging_server_pb2/_version.py"
@@ -52,10 +51,11 @@ sources = [
   "src",
 ]
 
-[tool.hatch.build.hooks.custom]
-proto_builds = [
-  { proto_file = "otaclient_iot_logging_server_v1.proto", output_package = "otaclient_iot_logging_server_pb2/v1", api_version = "1.0.0" },
-]
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.black]
 line-length = 88
