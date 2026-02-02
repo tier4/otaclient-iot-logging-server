@@ -21,7 +21,7 @@ jobs:
         with:
           # use the minimum py ver we support to
           # generate the wheel.
-          python-version: "3.8"
+          python-version: "3.14"
 
       - name: Install build deps
         run: |
