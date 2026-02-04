@@ -12,7 +12,8 @@ Environment=UPLOAD_LOGGING_SERVER_LOGS=true
 Environment=SERVER_LOGGING_LEVEL=INFO
 Restart=on-failure
 RestartSec=10
-Type=simple
+Type=nofity
+NotifyAccess=all
 
 [Install]
 WantedBy=multi-user.target
