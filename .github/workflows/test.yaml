@@ -16,6 +16,7 @@ permissions:
   contents: read
   packages: read
   actions: read
+  pull-requests: write
 
 jobs:
   pytest_with_coverage_on_supported_os:
