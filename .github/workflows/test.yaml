@@ -16,6 +16,7 @@ permissions:
   contents: read
   packages: read
   actions: read
+  pull-requests: write
 
 jobs:
   pytest_with_coverage_on_supported_os:
@@ -53,7 +54,6 @@ jobs:
       # export the coverage report to the comment!
       - name: Add coverage report to PR comment
         if: matrix.os == 'ubuntu-24.04'
-        continue-on-error: true
         uses: MishaKav/pytest-coverage-comment@ae0e8a539a3f310aefb3bfb6a2209778a21fa42b # v1.2.0
         with:
           pytest-xml-coverage-path: test_result/coverage.xml
