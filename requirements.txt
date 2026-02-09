@@ -56,7 +56,7 @@ frozenlist==1.8.0 ; python_full_version >= '3.9'
     #   aiosignal
 grpcio==1.70.0 ; python_full_version < '3.9'
     # via otaclient-iot-logging-server
-grpcio==1.76.0 ; python_full_version >= '3.9'
+grpcio==1.78.0 ; python_full_version >= '3.9'
     # via otaclient-iot-logging-server
 idna==3.11
     # via yarl
