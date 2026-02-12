@@ -462,49 +462,6 @@ wheels = [
 ]
 
 [[package]]
-name = "awsiot-credentialhelper"
-version = "0.6.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.8.1'",
-]
-dependencies = [
-    { name = "awscrt", version = "0.16.26", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8.1'" },
-    { name = "boto3", version = "1.37.38", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8.1'" },
-    { name = "botocore", version = "1.37.38", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8.1'" },
-    { name = "typing-extensions", version = "4.13.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8.1'" },
-    { name = "urllib3", marker = "python_full_version < '3.8.1'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/e9/dc6aca29554ae90721086142059ce64205b536c5c2a395cdf00d82dfb60b/awsiot_credentialhelper-0.6.0.tar.gz", hash = "sha256:755b0974a80f16156cb04fe0fe31a07edc23678af2b7aeaf6211197c5d138f58", size = 14380, upload-time = "2023-11-22T19:51:13.985Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/66/c9df8a60d66a4db8d37ca69ddb8467d24f78e0540dc073cce78620e4b4b4/awsiot_credentialhelper-0.6.0-py3-none-any.whl", hash = "sha256:a1ca3775c5cdfd754cf41992506777b78e421ea46d39b59b356f560eebdd357d", size = 13410, upload-time = "2023-11-22T19:51:12.769Z" },
-]
-
-[[package]]
-name = "awsiot-credentialhelper"
-version = "1.0.2"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.10'",
-    "python_full_version == '3.9.*'",
-    "python_full_version >= '3.8.1' and python_full_version < '3.9'",
-]
-dependencies = [
-    { name = "awscrt", version = "0.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.8.1'" },
-    { name = "boto3", version = "1.37.38", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.8.1' and python_full_version < '3.9'" },
-    { name = "boto3", version = "1.42.44", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
-    { name = "botocore", version = "1.37.38", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.8.1' and python_full_version < '3.9'" },
-    { name = "botocore", version = "1.42.44", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
-    { name = "typing-extensions", version = "4.13.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.8.1' and python_full_version < '3.9'" },
-    { name = "typing-extensions", version = "4.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
-    { name = "urllib3", marker = "python_full_version >= '3.8.1'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/ec/4bd284c92075bd513e2dd4cbae731634fc355b5bd314a0abc45f9d45b86f/awsiot_credentialhelper-1.0.2.tar.gz", hash = "sha256:4db2f4dd03f13be9387ef660cf30b6cf4b7dacbd63e0c8aaef54666a3f19aa18", size = 14370, upload-time = "2024-09-30T20:16:30.456Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c3/91/5861d666f872084180ddcd70dbe3c3f34bb5606be47bc008283301c5d5a3/awsiot_credentialhelper-1.0.2-py3-none-any.whl", hash = "sha256:b3d41064ea4a73726c0c489e12937c1493954eb5f50b2bcdd8cc6e5e57998084", size = 13397, upload-time = "2024-09-30T20:16:29.169Z" },
-]
-
-[[package]]
 name = "backports-asyncio-runner"
 version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -560,7 +517,7 @@ resolution-markers = [
 dependencies = [
     { name = "jmespath", version = "1.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "python-dateutil", marker = "python_full_version < '3.9'" },
-    { name = "urllib3", marker = "python_full_version < '3.9'" },
+    { name = "urllib3", version = "1.26.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/34/79/4e072e614339727f79afef704e5993b5b4d2667c1671c757cc4deb954744/botocore-1.37.38.tar.gz", hash = "sha256:c3ea386177171f2259b284db6afc971c959ec103fa2115911c4368bea7cbbc5d", size = 13832365, upload-time = "2025-04-21T19:27:05.245Z" }
 wheels = [
@@ -578,7 +535,8 @@ resolution-markers = [
 dependencies = [
     { name = "jmespath", version = "1.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "python-dateutil", marker = "python_full_version >= '3.9'" },
-    { name = "urllib3", marker = "python_full_version >= '3.9'" },
+    { name = "urllib3", version = "1.26.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
+    { name = "urllib3", version = "2.6.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/29/ff/54cef2c5ff4e1c77fabc0ed68781e48eb36f33433f82bba3605e9c0e45ce/botocore-1.42.44.tar.gz", hash = "sha256:47ba27360f2afd2c2721545d8909217f7be05fdee16dd8fc0b09589535a0701c", size = 14936071, upload-time = "2026-02-06T20:27:53.654Z" }
 wheels = [
@@ -1742,8 +1700,8 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp", version = "3.10.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "aiohttp", version = "3.13.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
-    { name = "awsiot-credentialhelper", version = "0.6.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8.1'" },
-    { name = "awsiot-credentialhelper", version = "1.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.8.1'" },
+    { name = "awscrt", version = "0.16.26", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8.1'" },
+    { name = "awscrt", version = "0.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.8.1'" },
     { name = "boto3", version = "1.37.38", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "boto3", version = "1.42.44", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "grpcio", version = "1.70.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
@@ -1758,6 +1716,8 @@ dependencies = [
     { name = "pyyaml" },
     { name = "typing-extensions", version = "4.13.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "typing-extensions", version = "4.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+    { name = "urllib3", version = "1.26.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "urllib3", version = "2.6.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 
 [package.dev-dependencies]
@@ -1783,7 +1743,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.10.11,<3.14" },
-    { name = "awsiot-credentialhelper", specifier = ">=0.6,<1.1" },
+    { name = "awscrt", specifier = ">=0.16.9,<0.32" },
     { name = "boto3", specifier = ">=1.34.35,<1.43" },
     { name = "grpcio", specifier = ">=1.70,<1.79" },
     { name = "protobuf", specifier = ">=4.25.8,<6.34" },
@@ -1791,6 +1751,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.2.1,<3" },
     { name = "pyyaml", specifier = ">=6.0.1,<7" },
     { name = "typing-extensions", specifier = ">=4" },
+    { name = "urllib3", specifier = ">=1.26,<3" },
 ]
 
 [package.metadata.requires-dev]
@@ -3000,9 +2961,26 @@ wheels = [
 name = "urllib3"
 version = "1.26.20"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version == '3.9.*'",
+    "python_full_version >= '3.8.1' and python_full_version < '3.9'",
+    "python_full_version < '3.8.1'",
+]
 sdist = { url = "https://files.pythonhosted.org/packages/e4/e8/6ff5e6bc22095cfc59b6ea711b687e2b7ed4bdb373f7eeec370a97d7392f/urllib3-1.26.20.tar.gz", hash = "sha256:40c2dc0c681e47eb8f90e7e27bf6ff7df2e677421fd46756da1161c39ca70d32", size = 307380, upload-time = "2024-08-29T15:43:11.37Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/33/cf/8435d5a7159e2a9c83a95896ed596f68cf798005fe107cc655b5c5c14704/urllib3-1.26.20-py2.py3-none-any.whl", hash = "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e", size = 144225, upload-time = "2024-08-29T15:43:08.921Z" },
+]
+
+[[package]]
+name = "urllib3"
+version = "2.6.3"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.10'",
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c7/24/5f1b3bdffd70275f6661c76461e25f024d5a38a46f04aaca912426a2b1d3/urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed", size = 435556, upload-time = "2026-01-07T16:24:43.925Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4", size = 131584, upload-time = "2026-01-07T16:24:42.685Z" },
 ]
 
 [[package]]
