@@ -231,12 +231,12 @@ def _fetch_iot_credentials_pkcs11(
     response_body = bytearray()
 
     def on_response(
-        _http_stream: Any, status_code: int, _headers: Any, **_kwargs: Any
+        http_stream: Any, status_code: int, headers: Any, **_kwargs: Any
     ) -> None:
         nonlocal response_status_code
         response_status_code = status_code
 
-    def on_body(_http_stream: Any, chunk: bytes, **_kwargs: Any) -> None:
+    def on_body(http_stream: Any, chunk: bytes, **_kwargs: Any) -> None:
         response_body.extend(chunk)
 
     stream = connection.request(request, on_response, on_body)
