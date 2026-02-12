@@ -23,7 +23,6 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import urllib3
 from awscrt.http import HttpClientConnection, HttpRequest
 from awscrt.io import (
     ClientBootstrap,
@@ -141,61 +140,24 @@ def _parse_credentials_response(
     }
 
 
-def _fetch_iot_credentials(
-    endpoint: str,
-    role_alias: str,
-    thing_name: str,
+def _build_tls_context_from_path(
     cert_path: str,
     key_path: str,
-) -> Dict[str, Any]:
-    """Fetch IAM credentials from AWS IoT Core Credential Provider via mTLS.
-
-    Uses urllib3 with client certificate file paths directly.
-
-    Args:
-        endpoint: AWS IoT credential provider endpoint FQDN.
-        role_alias: IoT Role Alias name.
-        thing_name: IoT Thing Name.
-        cert_path: Path to the client certificate PEM file.
-        key_path: Path to the private key file.
-
-    Returns:
-        Credentials dict with access_key, secret_key, token, expiry_time.
-    """
-    url = f"https://{endpoint}/role-aliases/{role_alias}/credentials"
-    http = urllib3.PoolManager(cert_file=cert_path, key_file=key_path)
-    response = http.request(
-        "GET",
-        url,
-        headers={"x-amzn-iot-thingname": thing_name},
+) -> TlsContextOptions:
+    """Build TLS context options using plain certificate/key files."""
+    return TlsContextOptions.create_client_with_mtls_from_path(
+        cert_filepath=cert_path,
+        pk_filepath=key_path,
     )
-    return _parse_credentials_response(response.status, response.data, url)
 
 
-def _fetch_iot_credentials_pkcs11(
-    endpoint: str,
-    role_alias: str,
-    thing_name: str,
+def _build_tls_context_pkcs11(
     cert_pem: bytes,
     pkcs11_cfg: PKCS11Config,
     private_key_label: Optional[str] = None,
-) -> Dict[str, Any]:
-    """Fetch IAM credentials using PKCS#11 for private key operations via awscrt.
-
-    awscrt is required here because urllib3 does not support PKCS#11.
-
-    Args:
-        endpoint: AWS IoT credential provider endpoint FQDN.
-        role_alias: IoT Role Alias name.
-        thing_name: IoT Thing Name.
-        cert_pem: Client certificate in PEM format (bytes).
-        pkcs11_cfg: PKCS#11 configuration.
-        private_key_label: Label of the private key in the PKCS#11 store.
-
-    Returns:
-        Credentials dict with access_key, secret_key, token, expiry_time.
-    """
-    tls_ctx_opt = TlsContextOptions.create_client_with_mtls_pkcs11(
+) -> TlsContextOptions:
+    """Build TLS context options using PKCS#11 for private key operations."""
+    return TlsContextOptions.create_client_with_mtls_pkcs11(
         pkcs11_lib=Pkcs11Lib(file=pkcs11_cfg.pkcs11_lib),
         user_pin=pkcs11_cfg.user_pin,
         slot_id=int(pkcs11_cfg.slot_id),
@@ -205,6 +167,26 @@ def _fetch_iot_credentials_pkcs11(
         cert_file_contents=cert_pem,
     )
 
+
+def _fetch_iot_credentials_via_awscrt(
+    endpoint: str,
+    role_alias: str,
+    thing_name: str,
+    tls_ctx_opt: TlsContextOptions,
+) -> Dict[str, Any]:
+    """Fetch IAM credentials from AWS IoT Core Credential Provider via mTLS.
+
+    Uses awscrt for the HTTP request with the given TLS context.
+
+    Args:
+        endpoint: AWS IoT credential provider endpoint FQDN.
+        role_alias: IoT Role Alias name.
+        thing_name: IoT Thing Name.
+        tls_ctx_opt: TLS context options configured for mTLS.
+
+    Returns:
+        Credentials dict with access_key, secret_key, token, expiry_time.
+    """
     path = f"/role-aliases/{role_alias}/credentials"
     url = f"https://{endpoint}{path}"
 
@@ -244,6 +226,41 @@ def _fetch_iot_credentials_pkcs11(
     stream.completion_future.result(_AWSCRT_TIMEOUT_SEC)
 
     return _parse_credentials_response(response_status_code, bytes(response_body), url)
+
+
+def _fetch_iot_credentials(
+    endpoint: str,
+    role_alias: str,
+    thing_name: str,
+    cert_path: str,
+    key_path: str,
+) -> Dict[str, Any]:
+    """Fetch IAM credentials using plain certificate/key files."""
+    tls_ctx_opt = _build_tls_context_from_path(cert_path, key_path)
+    return _fetch_iot_credentials_via_awscrt(
+        endpoint=endpoint,
+        role_alias=role_alias,
+        thing_name=thing_name,
+        tls_ctx_opt=tls_ctx_opt,
+    )
+
+
+def _fetch_iot_credentials_pkcs11(
+    endpoint: str,
+    role_alias: str,
+    thing_name: str,
+    cert_pem: bytes,
+    pkcs11_cfg: PKCS11Config,
+    private_key_label: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Fetch IAM credentials using PKCS#11 for private key operations."""
+    tls_ctx_opt = _build_tls_context_pkcs11(cert_pem, pkcs11_cfg, private_key_label)
+    return _fetch_iot_credentials_via_awscrt(
+        endpoint=endpoint,
+        role_alias=role_alias,
+        thing_name=thing_name,
+        tls_ctx_opt=tls_ctx_opt,
+    )
 
 
 #

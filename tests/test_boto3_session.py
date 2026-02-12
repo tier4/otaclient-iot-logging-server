@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -28,6 +27,7 @@ from otaclient_iot_logging_server.boto3_session import (  # type: ignore
     _convert_to_pem,
     _create_boto3_session,
     _fetch_iot_credentials,
+    _parse_credentials_response,
     get_session,
 )
 from otaclient_iot_logging_server.greengrass_config import (
@@ -150,31 +150,26 @@ def test_get_session(
 
 
 class TestFetchIoTCredentials:
-    """Tests for _fetch_iot_credentials (urllib3-based)."""
+    """Tests for _fetch_iot_credentials (awscrt-based)."""
 
-    _MOCK_RESPONSE_BODY = json.dumps(
-        {
-            "credentials": {
-                "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
-                "secretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-                "sessionToken": "FwoGZXIvYXdzEBY...",
-                "expiration": "2099-01-01T00:00:00Z",
-            }
+    def _mock_awscrt(self, mocker: MockerFixture):
+        """Mock _fetch_iot_credentials_via_awscrt to return controlled responses."""
+        mock_response = {
+            "access_key": "AKIAIOSFODNN7EXAMPLE",
+            "secret_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "token": "FwoGZXIvYXdzEBY...",
+            "expiry_time": "2099-01-01T00:00:00Z",
         }
-    ).encode()
-
-    def _mock_urllib3(self, mocker: MockerFixture, status=200, data=None):
-        mock_response = MagicMock()
-        mock_response.status = status
-        mock_response.data = data if data is not None else self._MOCK_RESPONSE_BODY
-        mock_pool = MagicMock()
-        mock_pool.request.return_value = mock_response
-        mocker.patch(f"{MODULE}.urllib3.PoolManager", return_value=mock_pool)
-        return mock_pool
+        mock = mocker.patch(
+            f"{MODULE}._fetch_iot_credentials_via_awscrt",
+            return_value=mock_response,
+        )
+        return mock
 
     def test_success(self, mocker: MockerFixture, tmp_path):
         """Verify successful credential fetching returns correct format."""
-        mock_pool = self._mock_urllib3(mocker)
+        mock = self._mock_awscrt(mocker)
+        mock_build = mocker.patch(f"{MODULE}._build_tls_context_from_path")
 
         result = _fetch_iot_credentials(
             endpoint="example.credentials.iot.ap-northeast-1.amazonaws.com",
@@ -188,19 +183,18 @@ class TestFetchIoTCredentials:
         assert result["secret_key"] == "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
         assert result["token"] == "FwoGZXIvYXdzEBY..."
         assert result["expiry_time"] == "2099-01-01T00:00:00Z"
-        # Verify urllib3 was called with correct args
-        mock_pool.request.assert_called_once_with(
-            "GET",
-            "https://example.credentials.iot.ap-northeast-1.amazonaws.com"
-            "/role-aliases/test-role-alias/credentials",
-            headers={"x-amzn-iot-thingname": "test-thing"},
+        # Verify tls_ctx_opt from _build_tls_context_from_path is passed through
+        mock.assert_called_once_with(
+            endpoint="example.credentials.iot.ap-northeast-1.amazonaws.com",
+            role_alias="test-role-alias",
+            thing_name="test-thing",
+            tls_ctx_opt=mock_build.return_value,
         )
 
-    def test_cert_and_key_paths_passed_to_pool_manager(self, mocker: MockerFixture):
-        """Verify cert and key file paths are passed directly to urllib3."""
-        mock_pm_cls = mocker.patch(f"{MODULE}.urllib3.PoolManager")
-        mock_response = MagicMock(status=200, data=self._MOCK_RESPONSE_BODY)
-        mock_pm_cls.return_value.request.return_value = mock_response
+    def test_tls_context_built_with_cert_and_key(self, mocker: MockerFixture):
+        """Verify cert and key file paths are passed to _build_tls_context_from_path."""
+        mock_build = mocker.patch(f"{MODULE}._build_tls_context_from_path")
+        self._mock_awscrt(mocker)
 
         _fetch_iot_credentials(
             endpoint="example.credentials.iot.ap-northeast-1.amazonaws.com",
@@ -210,14 +204,17 @@ class TestFetchIoTCredentials:
             key_path="/path/to/key.pem",
         )
 
-        mock_pm_cls.assert_called_once_with(
-            cert_file="/path/to/cert.pem",
-            key_file="/path/to/key.pem",
-        )
+        mock_build.assert_called_once_with("/path/to/cert.pem", "/path/to/key.pem")
 
     def test_error_response_does_not_leak_body(self, mocker: MockerFixture):
         """Verify non-200 response raises ValueError without leaking body."""
-        self._mock_urllib3(mocker, status=403, data=b"secret error details")
+        mocker.patch(f"{MODULE}._build_tls_context_from_path")
+        mocker.patch(
+            f"{MODULE}._fetch_iot_credentials_via_awscrt",
+            side_effect=ValueError(
+                "Error getting credentials from IoT credential provider: status=403"
+            ),
+        )
 
         with pytest.raises(ValueError, match="status=403") as exc_info:
             _fetch_iot_credentials(
@@ -228,6 +225,35 @@ class TestFetchIoTCredentials:
                 key_path="/path/to/key.pem",
             )
 
+        assert "secret" not in str(exc_info.value)
+
+
+class TestParseCredentialsResponse:
+    """Tests for _parse_credentials_response."""
+
+    def test_success(self):
+        """Verify successful parsing of credential response."""
+        body = (
+            b'{"credentials": {'
+            b'"accessKeyId": "AKID", '
+            b'"secretAccessKey": "SECRET", '
+            b'"sessionToken": "TOKEN", '
+            b'"expiration": "2099-01-01T00:00:00Z"}}'
+        )
+        result = _parse_credentials_response(200, body, "https://example.com")
+        assert result == {
+            "access_key": "AKID",
+            "secret_key": "SECRET",
+            "token": "TOKEN",
+            "expiry_time": "2099-01-01T00:00:00Z",
+        }
+
+    def test_error_does_not_leak_body(self):
+        """Verify non-200 response raises ValueError without leaking body."""
+        with pytest.raises(ValueError, match="status=403") as exc_info:
+            _parse_credentials_response(
+                403, b"secret error details", "https://example.com"
+            )
         assert "secret" not in str(exc_info.value)
 
 

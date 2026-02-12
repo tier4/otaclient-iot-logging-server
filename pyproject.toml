@@ -39,7 +39,6 @@ dependencies = [
   "pydantic-settings>=2.2.1,<3",
   "pyyaml>=6.0.1,<7",
   "typing-extensions>=4",
-  "urllib3>=1.26,<3",
 ]
 
 urls.Homepage = "https://github.com/tier4/otaclient-iot-logging-server"
