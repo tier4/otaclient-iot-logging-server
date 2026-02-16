@@ -19,7 +19,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 from urllib.parse import urljoin
 
 import yaml
@@ -218,7 +218,7 @@ class IoTSessionConfig(FixedConfig):
     region: str
 
     aws_credential_provider_endpoint: str
-    pkcs11_config: Optional[PKCS11Config] = None
+    pkcs11_config: PKCS11Config | None = None
 
     @computed_field
     @property

@@ -21,7 +21,6 @@ from __future__ import annotations
 import logging
 from functools import cached_property
 from pathlib import Path
-from typing import List, Optional
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, IPvAnyAddress
@@ -50,7 +49,7 @@ class ECUInfo(BaseFixedConfig):
 
     format_version: int = 1
     ecu_id: str
-    secondaries: List[ECUContact] = Field(default_factory=list)
+    secondaries: list[ECUContact] = Field(default_factory=list)
 
     @cached_property
     def ecu_id_set(self) -> set[str]:
@@ -59,7 +58,7 @@ class ECUInfo(BaseFixedConfig):
         return set(res)
 
 
-def parse_ecu_info(ecu_info_file: Path | str) -> Optional[ECUInfo]:
+def parse_ecu_info(ecu_info_file: Path | str) -> ECUInfo | None:
     try:
         _raw_yaml_str = Path(ecu_info_file).read_text()
         loaded_ecu_info = yaml.safe_load(_raw_yaml_str)

@@ -21,7 +21,7 @@ import ssl
 import subprocess
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from awscrt.http import HttpClientConnection, HttpRequest
 from awscrt.io import (
@@ -55,7 +55,7 @@ def _load_pkcs11_cert(
     pkcs11_lib: str,
     slot_id: str,
     private_key_label: str,
-    user_pin: Optional[str] = None,
+    user_pin: str | None = None,
 ) -> bytes:
     """Load certificate from a pkcs11 interface(backed by a TPM2.0 chip).
 
@@ -85,7 +85,7 @@ def _convert_to_pem(_data: bytes) -> bytes:
     return ssl.DER_cert_to_PEM_cert(_data).encode()
 
 
-def _load_certificate(cert_path: str, pkcs11_cfg: Optional[PKCS11Config]) -> bytes:
+def _load_certificate(cert_path: str, pkcs11_cfg: PKCS11Config | None) -> bytes:
     """
     NOTE: Only PEM format cert is supported.
     """
@@ -118,7 +118,7 @@ def _parse_credentials_response(
     response_status: int,
     response_body: bytes,
     credential_url: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Parse credential provider response, raising on non-200 status."""
     if response_status != HTTPStatus.OK:
         logger.error(
@@ -154,7 +154,7 @@ def _build_tls_context_from_path(
 def _build_tls_context_pkcs11(
     cert_pem: bytes,
     pkcs11_cfg: PKCS11Config,
-    private_key_label: Optional[str] = None,
+    private_key_label: str | None = None,
 ) -> TlsContextOptions:
     """Build TLS context options using PKCS#11 for private key operations."""
     return TlsContextOptions.create_client_with_mtls_pkcs11(
@@ -173,7 +173,7 @@ def _fetch_iot_credentials_via_awscrt(
     role_alias: str,
     thing_name: str,
     tls_ctx_opt: TlsContextOptions,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Fetch IAM credentials from AWS IoT Core Credential Provider via mTLS.
 
     Uses awscrt for the HTTP request with the given TLS context.
@@ -234,7 +234,7 @@ def _fetch_iot_credentials(
     thing_name: str,
     cert_path: str,
     key_path: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Fetch IAM credentials using plain certificate/key files."""
     tls_ctx_opt = _build_tls_context_from_path(cert_path, key_path)
     return _fetch_iot_credentials_via_awscrt(
@@ -251,8 +251,8 @@ def _fetch_iot_credentials_pkcs11(
     thing_name: str,
     cert_pem: bytes,
     pkcs11_cfg: PKCS11Config,
-    private_key_label: Optional[str] = None,
-) -> Dict[str, Any]:
+    private_key_label: str | None = None,
+) -> dict[str, Any]:
     """Fetch IAM credentials using PKCS#11 for private key operations."""
     tls_ctx_opt = _build_tls_context_pkcs11(cert_pem, pkcs11_cfg, private_key_label)
     return _fetch_iot_credentials_via_awscrt(

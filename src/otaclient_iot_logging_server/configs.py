@@ -16,12 +16,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Literal
+from typing import Annotated, Literal
 
 import yaml
 from pydantic import BaseModel, BeforeValidator, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Annotated
 
 from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
 
@@ -65,7 +64,7 @@ class _AWSProfile(BaseModel):
     credential_endpoint: str
 
 
-class AWSProfileInfo(RootModel[List[_AWSProfile]]):
+class AWSProfileInfo(RootModel[list[_AWSProfile]]):
     def get_profile_info(self, profile_name: str) -> _AWSProfile:
         for profile in self.root:
             if profile.profile_name == profile_name:
