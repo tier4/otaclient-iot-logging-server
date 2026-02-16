@@ -130,13 +130,6 @@ def retry(
     return _inner
 
 
-def remove_prefix(_str: str, _prefix: str) -> str:
-    # NOTE: in py3.8 we don't have str.removeprefix yet.
-    if _str.startswith(_prefix):
-        return _str.replace(_prefix, "", 1)
-    return _str
-
-
 def parse_pkcs11_uri(_pkcs11_uri: str) -> PKCS11URI:
     _, pkcs11_opts_str = _pkcs11_uri.split(":", maxsplit=1)
     pkcs11_opts_dict: dict[str, Any] = {}

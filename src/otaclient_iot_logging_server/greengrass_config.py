@@ -18,7 +18,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-from functools import partial
 from pathlib import Path
 from typing import Any, NamedTuple, Optional
 from urllib.parse import urljoin
@@ -26,7 +25,7 @@ from urllib.parse import urljoin
 import yaml
 from pydantic import computed_field
 
-from otaclient_iot_logging_server._utils import FixedConfig, chain_query, remove_prefix
+from otaclient_iot_logging_server._utils import FixedConfig, chain_query
 from otaclient_iot_logging_server.config_file_monitor import monitored_config_files
 from otaclient_iot_logging_server.configs import profile_info, server_cfg
 
@@ -75,13 +74,14 @@ class _ThingArn(NamedTuple):
 
     @property
     def thing_name(self) -> str:
-        return remove_prefix(self.resource_id, "thing/")
+        return self.resource_id.removeprefix("thing/")
 
 
 #
 # ------ v1 configuration parse ------ #
 #
-regulate_path = partial(remove_prefix, _prefix="file://")
+def regulate_path(_str: str) -> str:
+    return _str.removeprefix("file://")
 
 
 def parse_v1_config(_raw_cfg: str) -> IoTSessionConfig:
