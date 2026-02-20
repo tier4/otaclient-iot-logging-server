@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import time
 from functools import partial, wraps
-from typing import Any, Callable, ParamSpec, TypeAlias, TypeVar, overload
+from typing import Any, Callable, Optional, TypeVar, overload
 
 from pydantic import BaseModel, ConfigDict
+from typing_extensions import ParamSpec, TypeAlias
 
 from otaclient_iot_logging_server._common import PKCS11URI
 
@@ -95,7 +96,7 @@ def retry(
 
 
 def retry(
-    func: Callable[P, RT] | None = None,
+    func: Optional[Callable[P, RT]] = None,
     /,
     backoff_factor: float = 0.1,
     backoff_max: int = 6,
@@ -127,6 +128,13 @@ def retry(
                 raise
 
     return _inner
+
+
+def remove_prefix(_str: str, _prefix: str) -> str:
+    # NOTE: in py3.8 we don't have str.removeprefix yet.
+    if _str.startswith(_prefix):
+        return _str.replace(_prefix, "", 1)
+    return _str
 
 
 def parse_pkcs11_uri(_pkcs11_uri: str) -> PKCS11URI:

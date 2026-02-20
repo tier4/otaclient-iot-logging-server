@@ -15,6 +15,8 @@
 
 from __future__ import annotations
 
+from typing import Optional as _Optional
+
 from otaclient_iot_logging_server.v1 import otaclient_iot_logging_server_v1_pb2 as pb2
 from proto_wrapper.proto_wrapper import (
     EnumWrapper,
@@ -71,11 +73,11 @@ class PutLogRequest(MessageWrapper[pb2.PutLogRequest]):
     def __init__(
         self,
         *,
-        ecu_id: str | None = ...,
-        log_type: LogType | None = ...,
-        timestamp: int | None = ...,
-        level: LogLevel | None = ...,
-        message: str | None = ...,
+        ecu_id: _Optional[str] = ...,
+        log_type: _Optional[LogType] = ...,
+        timestamp: _Optional[int] = ...,
+        level: _Optional[LogLevel] = ...,
+        message: _Optional[str] = ...,
     ) -> None: ...
 
 
@@ -87,8 +89,8 @@ class PutLogResponse(MessageWrapper[pb2.PutLogResponse]):
     def __init__(
         self,
         *,
-        code: ErrorCode | None = ...,
-        message: str | None = ...,
+        code: _Optional[ErrorCode] = ...,
+        message: _Optional[str] = ...,
     ) -> None: ...
 
 
@@ -102,7 +104,7 @@ class HealthCheckRequest(MessageWrapper[pb2.HealthCheckRequest]):
     def __init__(
         self,
         *,
-        service: str | None = ...,
+        service: _Optional[str] = ...,
     ) -> None: ...
 
 
@@ -113,5 +115,5 @@ class HealthCheckResponse(MessageWrapper[pb2.HealthCheckResponse]):
     def __init__(
         self,
         *,
-        status: ServiceStatus | None = ...,
+        status: _Optional[ServiceStatus] = ...,
     ) -> None: ...
