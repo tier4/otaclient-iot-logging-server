@@ -17,9 +17,9 @@ from __future__ import annotations
 
 from enum import Enum
 from queue import Queue
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, TypedDict
 
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, TypeAlias
 
 # LogQueue is a queue of LogGroupType, ecu_id, and LogMessage
 LogsQueue: TypeAlias = "Queue[tuple[LogGroupType, str, LogMessage]]"

@@ -4,7 +4,7 @@ This document describes how to set up a development environment for otaclient-io
 
 ## Prerequisites
 
-- Python 3.10 or later
+- Python 3.8 or later
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager
 
 ## Setup

@@ -26,6 +26,7 @@ from otaclient_iot_logging_server._utils import (
     NestedDict,
     chain_query,
     parse_pkcs11_uri,
+    remove_prefix,
     retry,
 )
 
@@ -202,6 +203,32 @@ class TestRetry:
         time_cost = time.time() - _start_time
         logger.info(f"{time_cost=}")
         assert time_cost <= expected_retry_session_timecost
+
+
+@pytest.mark.parametrize(
+    "_input, _prefix, _expected",
+    [
+        # test#1: test remove schema from pkcs11 URI
+        (
+            "pkcs11:token=token;object=object;pin-value=pin-value",
+            "pkcs11:",
+            "token=token;object=object;pin-value=pin-value",
+        ),
+        # test#2: test remove schema from file URI
+        (
+            "file:///path/to/something",
+            "file://",
+            "/path/to/something",
+        ),
+        (
+            "abcabcabcabcabcabcabcabcabc",
+            "abc",
+            "abcabcabcabcabcabcabcabc",
+        ),
+    ],
+)
+def test_remove_prefix(_input: str, _prefix: str, _expected: str):
+    assert remove_prefix(_input, _prefix) == _expected
 
 
 @pytest.mark.parametrize(
