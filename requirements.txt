@@ -40,7 +40,7 @@ propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
-protobuf==6.33.5
+protobuf==7.34.0
     # via otaclient-iot-logging-server
 pydantic==2.12.5
     # via
