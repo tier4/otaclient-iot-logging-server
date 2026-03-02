@@ -38,7 +38,6 @@ dependencies = [
   "pyyaml>=6.0.1,<7",
   "typing-extensions>=4",
 ]
-
 urls.Homepage = "https://github.com/tier4/otaclient-iot-logging-server"
 urls.Source = "https://github.com/tier4/otaclient-iot-logging-server"
 scripts.iot_logging_server = "otaclient_iot_logging_server.__main__:main"
@@ -53,25 +52,19 @@ dev = [
   "pytest-mock~=3.12",
 ]
 
-[tool.hatch.build.hooks.vcs]
-version-file = "src/otaclient_iot_logging_server/_version.py"
-
-[tool.hatch.build.targets.sdist]
-exclude = [
+[tool.hatch]
+build.hooks.vcs.version-file = "src/otaclient_iot_logging_server/_version.py"
+build.targets.sdist.exclude = [
   "/.github",
   "/docs",
 ]
-
-[tool.hatch.build.targets.wheel]
-only-include = [
+build.targets.wheel.only-include = [
   "src",
 ]
-sources = [
+build.targets.wheel.sources = [
   "src",
 ]
-
-[tool.hatch.version]
-source = "vcs"
+version.source = "vcs"
 
 [tool.ruff]
 target-version = "py310"
@@ -85,7 +78,6 @@ extend-exclude = [
   "*_pb2.py*",
   "*_pb2_grpc.py*",
 ]
-
 lint.select = [
   "A",   # flake8-builtins
   "B",   # flake8-bugbear
@@ -105,41 +97,40 @@ lint.ignore = [
 ]
 lint.pydocstyle.convention = "google"
 
-[tool.pytest.ini_options]
-env = [
+[tool.pytest]
+ini_options.env = [
   "AWS_PROFILE_INFO=tests/data/aws_profile_info.yaml",
   "GREENGRASS_V1_CONFIG=tests/data/gg_v1_cfg.json",
   "GREENGRASS_V2_CONFIG=tests/data/gg_v2_cfg.yaml",
 ]
-asyncio_mode = "auto"
-log_auto_indent = true
-log_format = "%(asctime)s %(levelname)s %(filename)s %(funcName)s,%(lineno)d %(message)s"
-log_cli = true
-log_cli_level = "INFO"
-pythonpath = [
+ini_options.asyncio_mode = "auto"
+ini_options.log_auto_indent = true
+ini_options.log_format = "%(asctime)s %(levelname)s %(filename)s %(funcName)s,%(lineno)d %(message)s"
+ini_options.log_cli = true
+ini_options.log_cli_level = "INFO"
+ini_options.pythonpath = [
   "src",
 ]
-testpaths = [
+ini_options.testpaths = [
   "tests",
 ]
 
-[tool.coverage.report]
-omit = [
-  "**/*_pb2.py*",
-  "**/*_pb2_grpc.py*",
+[tool.coverage]
+run.branch = true
+run.relative_files = true
+run.source = [
+  "otaclient_iot_logging_server",
 ]
-exclude_also = [
+report.exclude_also = [
+  "@(abc\\.)?abstractmethod",
+  "class .*\\bProtocol\\):",
   "def __repr__",
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
-  "class .*\\bProtocol\\):",
-  "@(abc\\.)?abstractmethod",
 ]
-show_missing = true
-skip_empty = true
-[tool.coverage.run]
-branch = true
-source = [
-  "otaclient_iot_logging_server",
+report.omit = [
+  "**/*_pb2.py*",
+  "**/*_pb2_grpc.py*",
 ]
-relative_files = true
+report.show_missing = true
+report.skip_empty = true
