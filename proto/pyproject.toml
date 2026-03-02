@@ -23,46 +23,36 @@ classifiers = [
 ]
 urls.Source = "https://github.com/tier4/otaclient-iot-logging-server/proto"
 
-[tool.hatch.build.hooks.custom]
-proto_builds = [
+[tool.hatch]
+build.hooks.custom.proto_builds = [
   { proto_file = "otaclient_iot_logging_server_v1.proto", output_package = "otaclient_iot_logging_server_pb2/v1", api_version = "1.0.0" },
 ]
-
-[tool.hatch.build.hooks.vcs]
-version-file = "src/otaclient_iot_logging_server_pb2/_version.py"
-
-[tool.hatch.build.targets.sdist]
-exclude = [
+build.hooks.vcs.version-file = "src/otaclient_iot_logging_server_pb2/_version.py"
+build.targets.sdist.exclude = [
   "whl",
 ]
-
-[tool.hatch.build.targets.wheel]
-exclude = [
+build.targets.wheel.exclude = [
   "**/.gitignore",
   "**/*README.md",
   "whl",
 ]
-only-include = [
+build.targets.wheel.only-include = [
   "src",
 ]
-sources = [
+build.targets.wheel.sources = [
   "src",
 ]
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.version]
-source = "vcs"
+metadata.allow-direct-references = true
+version.source = "vcs"
 
 [tool.black]
 line-length = 88
 target-version = [
-  'py311',
+  "py311",
 ]
-extend-exclude = '''(
+extend-exclude = """(
   ^.*(_pb2.pyi?|_pb2_grpc.pyi?)$
-)'''
+)"""
 
 [tool.isort]
 profile = "black"
