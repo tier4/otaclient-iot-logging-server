@@ -3,7 +3,6 @@
     "allow": [
       "Bash(uv sync*)",
       "Bash(uv build*)",
-      "Bash(uv run*)",
       "Bash(pre-commit run*)",
       "Bash(git diff*)",
       "Bash(git log*)",
