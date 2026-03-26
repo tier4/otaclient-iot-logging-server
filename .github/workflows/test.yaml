@@ -61,7 +61,7 @@ jobs:
 
       - name: SonarCloud Scan
         if: matrix.os == 'ubuntu-24.04'
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e # master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
