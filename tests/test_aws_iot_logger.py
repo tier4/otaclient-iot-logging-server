@@ -25,6 +25,7 @@ from queue import Queue
 from uuid import uuid1
 
 import pytest
+from awscrt.exceptions import AwsCrtError
 from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.aws_iot_logger
@@ -155,3 +156,41 @@ class TestAWSIoTLogger:
         # ------ check result ------ #
         # confirm the send_messages mock receives the expecting calls.
         assert self._merged_msgs == self._test_result
+
+
+class TestCreateLogStreamAwsCrtError:
+    """Test that _create_log_stream properly handles AwsCrtError from awscrt."""
+
+    def test_awscrt_error_is_reraised(self, mocker: MockerFixture):
+        """When boto3 raises ValueError caused by AwsCrtError, the AwsCrtError
+        is extracted and re-raised directly.
+
+        This uses a real AwsCrtError instance (not a mock) to verify isinstance()
+        check and attribute access work with the installed awscrt version.
+        """
+        awscrt_err = AwsCrtError(
+            code=1049,
+            name="AWS_IO_TLS_ERROR_NEGOTIATION_FAILURE",
+            message="TLS negotiation failed",
+        )
+        value_err = ValueError("credential provider error")
+        value_err.__cause__ = awscrt_err
+
+        mock_client = mocker.MagicMock()
+        mock_client.create_log_stream.side_effect = value_err
+        mock_client.exceptions = mocker.MagicMock()
+        mock_client.exceptions.ResourceAlreadyExistsException = type(
+            "ResourceAlreadyExistsException", (Exception,), {}
+        )
+
+        iot_logger = mocker.MagicMock(spec=AWSIoTLogger)
+        iot_logger._client = mock_client
+        iot_logger._exc_types = mock_client.exceptions
+
+        with pytest.raises(AwsCrtError) as exc_info:
+            AWSIoTLogger._create_log_stream.__wrapped__(
+                iot_logger, "test-log-group", "test-log-stream"
+            )
+        # Verify the re-raised error is the exact AwsCrtError instance
+        assert exc_info.value is awscrt_err
+        assert exc_info.value.code == 1049

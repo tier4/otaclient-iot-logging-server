@@ -173,6 +173,8 @@ def _fetch_iot_credentials_via_awscrt(
     role_alias: str,
     thing_name: str,
     tls_ctx_opt: TlsContextOptions,
+    *,
+    port: int = 443,
 ) -> dict[str, Any]:
     """Fetch IAM credentials from AWS IoT Core Credential Provider via mTLS.
 
@@ -183,6 +185,7 @@ def _fetch_iot_credentials_via_awscrt(
         role_alias: IoT Role Alias name.
         thing_name: IoT Thing Name.
         tls_ctx_opt: TLS context options configured for mTLS.
+        port: HTTPS port to connect to (default 443).
 
     Returns:
         Credentials dict with access_key, secret_key, token, expiry_time.
@@ -200,7 +203,7 @@ def _fetch_iot_credentials_via_awscrt(
 
     connection = HttpClientConnection.new(
         host_name=endpoint,
-        port=443,
+        port=port,
         bootstrap=bootstrap,
         tls_connection_options=tls_conn_opt,
     ).result(_AWSCRT_TIMEOUT_SEC)
