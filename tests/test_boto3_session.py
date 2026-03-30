@@ -15,18 +15,28 @@
 
 from __future__ import annotations
 
+import json
+import ssl
+import subprocess
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from awscrt.exceptions import AwsCrtError
+from awscrt.io import ClientTlsContext, Pkcs11Lib, TlsContextOptions
 from pytest_mock import MockerFixture
 
 import otaclient_iot_logging_server.boto3_session
 from otaclient_iot_logging_server._utils import parse_pkcs11_uri
 from otaclient_iot_logging_server.boto3_session import (  # type: ignore
+    _build_tls_context_from_path,
     _convert_to_pem,
     _create_boto3_session,
     _fetch_iot_credentials,
+    _fetch_iot_credentials_via_awscrt,
     _parse_credentials_response,
     get_session,
 )
@@ -270,3 +280,242 @@ class TestCreateBoto3Session:
         session = _create_boto3_session(_region, mock_refresh)
 
         assert session.region_name == _region
+
+
+# --- Integration tests using real awscrt objects --- #
+
+
+def _generate_tls_certificates(cert_dir: Path) -> dict[str, Path]:
+    """Generate CA, server, and client certificates using openssl CLI."""
+
+    san_cnf = cert_dir / "san.cnf"
+    san_cnf.write_text(
+        "[req]\n"
+        "distinguished_name = req_dn\n"
+        "req_extensions = v3_req\n"
+        "[req_dn]\n"
+        "[v3_req]\n"
+        "subjectAltName = DNS:localhost,IP:127.0.0.1\n"
+        "[v3_ext]\n"
+        "subjectAltName = DNS:localhost,IP:127.0.0.1\n"
+    )
+
+    def _run(*args: str) -> None:
+        subprocess.run(args, check=True, capture_output=True)
+
+    # CA key + self-signed cert
+    _run(
+        "openssl", "req", "-x509", "-newkey", "rsa:2048",
+        "-keyout", str(cert_dir / "ca.key"),
+        "-out", str(cert_dir / "ca.pem"),
+        "-days", "1", "-nodes", "-subj", "/CN=TestCA",
+    )  # fmt: skip
+
+    # Server cert (CN=localhost, SAN=localhost+127.0.0.1)
+    _run(
+        "openssl", "req", "-newkey", "rsa:2048",
+        "-keyout", str(cert_dir / "server.key"),
+        "-out", str(cert_dir / "server.csr"),
+        "-nodes", "-subj", "/CN=localhost",
+        "-config", str(san_cnf),
+    )  # fmt: skip
+    _run(
+        "openssl", "x509", "-req",
+        "-in", str(cert_dir / "server.csr"),
+        "-CA", str(cert_dir / "ca.pem"),
+        "-CAkey", str(cert_dir / "ca.key"),
+        "-CAcreateserial",
+        "-out", str(cert_dir / "server.pem"),
+        "-days", "1",
+        "-extensions", "v3_ext",
+        "-extfile", str(san_cnf),
+    )  # fmt: skip
+
+    # Client cert
+    _run(
+        "openssl", "req", "-newkey", "rsa:2048",
+        "-keyout", str(cert_dir / "client.key"),
+        "-out", str(cert_dir / "client.csr"),
+        "-nodes", "-subj", "/CN=TestClient",
+    )  # fmt: skip
+    _run(
+        "openssl", "x509", "-req",
+        "-in", str(cert_dir / "client.csr"),
+        "-CA", str(cert_dir / "ca.pem"),
+        "-CAkey", str(cert_dir / "ca.key"),
+        "-CAcreateserial",
+        "-out", str(cert_dir / "client.pem"),
+        "-days", "1",
+    )  # fmt: skip
+
+    return {
+        "ca": cert_dir / "ca.pem",
+        "server_cert": cert_dir / "server.pem",
+        "server_key": cert_dir / "server.key",
+        "client_cert": cert_dir / "client.pem",
+        "client_key": cert_dir / "client.key",
+    }
+
+
+class _CredentialHandler(BaseHTTPRequestHandler):
+    """HTTP handler that mimics AWS IoT credential provider responses."""
+
+    def do_GET(self):
+        if "error" in self.path:
+            body = b"Forbidden"
+            self.send_response(403)
+        else:
+            body = json.dumps(
+                {
+                    "credentials": {
+                        "accessKeyId": "AKID_INTEGRATION",
+                        "secretAccessKey": "SECRET_INTEGRATION",
+                        "sessionToken": "TOKEN_INTEGRATION",
+                        "expiration": "2099-01-01T00:00:00Z",
+                    }
+                }
+            ).encode()
+            self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format, *args):  # noqa: A002
+        pass  # suppress request logging during tests
+
+
+@pytest.fixture(scope="module")
+def tls_certificates(tmp_path_factory):
+    """Generate self-signed CA, server, and client certs for mTLS testing."""
+    cert_dir = tmp_path_factory.mktemp("certs")
+    return _generate_tls_certificates(cert_dir)
+
+
+@pytest.fixture(scope="module")
+def mtls_server(tls_certificates):
+    """Start a local HTTPS server requiring client certificate authentication."""
+    certs = tls_certificates
+
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.load_cert_chain(str(certs["server_cert"]), str(certs["server_key"]))
+    ctx.load_verify_locations(str(certs["ca"]))
+    ctx.verify_mode = ssl.CERT_REQUIRED
+
+    server = HTTPServer(("127.0.0.1", 0), _CredentialHandler)
+    server.socket = ctx.wrap_socket(server.socket, server_side=True)
+    port = server.server_address[1]
+
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+    yield port, certs
+
+    server.shutdown()
+
+
+class TestAwsCrtIntegration:
+    """Integration tests exercising real awscrt objects against a local mTLS server."""
+
+    def test_build_tls_context_from_path(self, tls_certificates):
+        """_build_tls_context_from_path creates a usable TlsContextOptions."""
+        certs = tls_certificates
+        result = _build_tls_context_from_path(
+            cert_path=str(certs["client_cert"]),
+            key_path=str(certs["client_key"]),
+        )
+        # Verify the full chain: TlsContextOptions -> ClientTlsContext -> connection options
+        tls_ctx = ClientTlsContext(result)
+        conn_opts = tls_ctx.new_connection_options()
+        assert conn_opts is not None
+
+    def test_fetch_credentials_success(self, mtls_server):
+        """Full awscrt HTTP flow against a local mTLS HTTPS server."""
+        port, certs = mtls_server
+
+        tls_opts = TlsContextOptions.create_client_with_mtls_from_path(
+            cert_filepath=str(certs["client_cert"]),
+            pk_filepath=str(certs["client_key"]),
+        )
+        tls_opts.override_default_trust_store_from_path(
+            ca_filepath=str(certs["ca"]),
+        )
+
+        result = _fetch_iot_credentials_via_awscrt(
+            endpoint="localhost",
+            role_alias="test-role",
+            thing_name="test-thing",
+            tls_ctx_opt=tls_opts,
+            port=port,
+        )
+
+        assert result == {
+            "access_key": "AKID_INTEGRATION",
+            "secret_key": "SECRET_INTEGRATION",
+            "token": "TOKEN_INTEGRATION",
+            "expiry_time": "2099-01-01T00:00:00Z",
+        }
+
+    def test_fetch_credentials_error_response(self, mtls_server):
+        """Non-200 response from the server raises ValueError."""
+        port, certs = mtls_server
+
+        tls_opts = TlsContextOptions.create_client_with_mtls_from_path(
+            cert_filepath=str(certs["client_cert"]),
+            pk_filepath=str(certs["client_key"]),
+        )
+        tls_opts.override_default_trust_store_from_path(
+            ca_filepath=str(certs["ca"]),
+        )
+
+        with pytest.raises(ValueError, match="status=403"):
+            _fetch_iot_credentials_via_awscrt(
+                endpoint="localhost",
+                role_alias="error",
+                thing_name="test-thing",
+                tls_ctx_opt=tls_opts,
+                port=port,
+            )
+
+    def test_pkcs11lib_api_exists(self):
+        """Verify Pkcs11Lib class and expected constructor parameter exist.
+
+        Actual PKCS#11 operations require a real shared library and TPM
+        hardware, so we only verify the API surface is intact.
+        """
+        import inspect
+
+        sig = inspect.signature(Pkcs11Lib.__init__)
+        assert "file" in sig.parameters
+
+    def test_create_client_with_mtls_pkcs11_api_exists(self):
+        """Verify create_client_with_mtls_pkcs11 has the expected parameters.
+
+        _build_tls_context_pkcs11 calls this with 7 keyword arguments.
+        Ensure the method signature is compatible.
+        """
+        import inspect
+
+        sig = inspect.signature(TlsContextOptions.create_client_with_mtls_pkcs11)
+        expected_params = {
+            "pkcs11_lib",
+            "user_pin",
+            "slot_id",
+            "token_label",
+            "private_key_label",
+            "cert_file_path",
+            "cert_file_contents",
+        }
+        assert expected_params.issubset(sig.parameters.keys())
+
+    def test_awscrt_error_attributes(self):
+        """Verify AwsCrtError can be instantiated and has expected attributes."""
+        err = AwsCrtError(
+            code=1049,
+            name="AWS_IO_TLS_ERROR_NEGOTIATION_FAILURE",
+            message="TLS negotiation failed",
+        )
+        assert err.code == 1049
+        assert err.name == "AWS_IO_TLS_ERROR_NEGOTIATION_FAILURE"
+        assert err.message == "TLS negotiation failed"
+        assert isinstance(err, Exception)
