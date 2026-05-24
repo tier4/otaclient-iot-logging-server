@@ -12,7 +12,7 @@ async-timeout==5.0.1 ; python_full_version < '3.11'
     # via aiohttp
 attrs==26.1.0
     # via aiohttp
-awscrt==0.32.2
+awscrt==0.33.0
     # via otaclient-iot-logging-server
 boto3==1.43.6
     # via otaclient-iot-logging-server
