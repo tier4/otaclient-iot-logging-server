@@ -14,9 +14,9 @@ attrs==26.1.0
     # via aiohttp
 awscrt==0.33.0
     # via otaclient-iot-logging-server
-boto3==1.43.14
+boto3==1.43.18
     # via otaclient-iot-logging-server
-botocore==1.43.14
+botocore==1.43.18
     # via
     #   boto3
     #   s3transfer
@@ -26,7 +26,7 @@ frozenlist==1.8.0
     #   aiosignal
 grpcio==1.80.0
     # via otaclient-iot-logging-server
-idna==3.16
+idna==3.17
     # via yarl
 jmespath==1.1.0
     # via
@@ -56,7 +56,7 @@ python-dotenv==1.2.2
     # via pydantic-settings
 pyyaml==6.0.3
     # via otaclient-iot-logging-server
-s3transfer==0.17.0
+s3transfer==0.18.0
     # via boto3
 six==1.17.0
     # via python-dateutil
