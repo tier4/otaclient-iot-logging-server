@@ -24,7 +24,7 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-grpcio==1.81.1
+grpcio==1.82.0
     # via otaclient-iot-logging-server
 idna==3.18
     # via yarl
