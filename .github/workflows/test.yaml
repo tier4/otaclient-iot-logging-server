@@ -54,7 +54,7 @@ jobs:
       # export the coverage report to the comment!
       - name: Add coverage report to PR comment
         if: matrix.os == 'ubuntu-24.04' && github.event_name == 'pull_request'
-        uses: MishaKav/pytest-coverage-comment@fd9adbdca9fdfbe2b9bfa44a7340e6a83346ce6c # v1.10.0
+        uses: MishaKav/pytest-coverage-comment@96fbda6d187cdff0b21968489966e33e2267248a # v1.10.1
         with:
           pytest-xml-coverage-path: test_result/coverage.xml
           junitxml-path: test_result/pytest.xml
