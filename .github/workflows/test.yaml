@@ -16,10 +16,12 @@ permissions:
   contents: read
   packages: read
   actions: read
-  pull-requests: write
 
 jobs:
   pytest_with_coverage_on_supported_os:
+    permissions:
+      contents: read
+      pull-requests: write # for the coverage report comment
     strategy:
       fail-fast: true
       matrix:
@@ -38,6 +40,7 @@ jobs:
         with:
           # sonarcloud needs main branch's ref
           fetch-depth: 0
+          persist-credentials: false
 
       # also see https://docs.astral.sh/uv/guides/integration/github/#multiple-python-versions
       - name: Install uv
@@ -61,7 +64,7 @@ jobs:
 
       - name: SonarCloud Scan
         if: matrix.os == 'ubuntu-24.04'
-        uses: SonarSource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e # master
+        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -74,6 +77,8 @@ jobs:
     steps:
       - name: Checkout commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # also see https://docs.astral.sh/uv/guides/integration/github/#multiple-python-versions
       - name: Install uv
