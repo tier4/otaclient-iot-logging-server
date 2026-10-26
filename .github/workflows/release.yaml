@@ -19,7 +19,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup python environment
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           # use the minimum py ver we support to
           # generate the wheel.
@@ -50,7 +50,7 @@ jobs:
             done
 
       - name: Upload built wheel as release asset
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           files: |
             dist/*.whl
