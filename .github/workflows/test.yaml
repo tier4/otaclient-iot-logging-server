@@ -64,7 +64,7 @@ jobs:
 
       - name: SonarCloud Scan
         if: matrix.os == 'ubuntu-24.04'
-        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
+        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
         # best-effort: a missing or invalid SONAR_TOKEN must not fail CI
         continue-on-error: true
         env:
