@@ -42,11 +42,11 @@ propcache==0.5.2
     #   yarl
 protobuf==7.36.2
     # via otaclient-iot-logging-server
-pydantic==2.14.1
+pydantic==2.14.2
     # via
     #   otaclient-iot-logging-server
     #   pydantic-settings
-pydantic-core==2.50.1
+pydantic-core==2.50.2
     # via pydantic
 pydantic-settings==2.15.0
     # via otaclient-iot-logging-server
