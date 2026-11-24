@@ -11,7 +11,7 @@ description = "A logging server that uploads logs sent from otaclient to AWS clo
 readme = "README.md"
 license = "Apache-2.0"
 license-files = [
-  "LICENSE",
+  "LICENSE.md",
 ]
 requires-python = ">=3.10"
 classifiers = [
